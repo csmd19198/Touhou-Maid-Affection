@@ -4,9 +4,9 @@ import com.github.tartaricacid.touhoulittlemaid.client.sound.OggReader;
 import com.github.tartaricacid.touhoulittlemaid.client.sound.data.Mp3AudioStream;
 import com.github.tartaricacid.touhoulittlemaid.client.sound.data.OpusAudioStream;
 import com.github.touhoumaidaffection.TouhouMaidAffection;
-import com.mojang.blaze3d.audio.OggAudioStream;
 import net.minecraft.Util;
 import net.minecraft.client.sounds.AudioStream;
+import com.mojang.blaze3d.audio.OggAudioStream;
 
 import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;

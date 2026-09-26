@@ -5,6 +5,7 @@ import com.github.touhoumaidaffection.bond.settings.TmaSettingsKeys;
 import com.github.touhoumaidaffection.bond.settings.TmaSettingsWire;
 import com.github.touhoumaidaffection.network.TmaSettingsRequestPayload;
 import com.github.touhoumaidaffection.network.TmaSettingsStatePayload;
+import net.minecraftforge.network.PacketDistributor;
 
 import java.util.List;
 import java.util.Map;

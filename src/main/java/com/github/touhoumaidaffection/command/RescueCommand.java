@@ -414,4 +414,3 @@ public final class RescueCommand {
         return normalized == null || normalized.isBlank() ? "auto" : normalized;
     }
 }
-

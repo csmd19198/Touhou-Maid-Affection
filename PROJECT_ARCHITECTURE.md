@@ -12,7 +12,7 @@
 - 羁绊系统承载长期关系状态，并解锁休闲膝枕、早安吻、残血救护、随机礼物等能力。
 - 服务端是权限、归属、距离、成本、冷却、日次数和任务推进的权威来源。
 - 客户端负责缓存、GUI、按键、音频播放、渲染桥接和视觉反馈。
-- 数据包、TLM 音包、TLM AI 站点、YSM 都是可选增强；缺失或失败时应降级，不应阻断主流程。
+- 数据包、TLM 音包、TLM AI 站点、MiMo、YSM、CarryOn 都是可选增强；缺失或失败时应降级，不应阻断主流程。
 
 ## 2. 技术栈与发布约束
 
@@ -21,19 +21,11 @@
 - Forge `47.4.16`
 - Gradle 单模块工程
 - Official mappings `1.20.1`
-- Touhou Little Maid 编译目标：`1.5.3-forge+mc1.20.1`
+- Touhou Little Maid 编译目标：`1.5.2-forge+mc1.20.1`
 - Mixin 用于 TLM GUI、TLM AI 编辑器、诱饵行为与膝枕渲染桥接
 - Modrinth Minotaur 与 GitHub Actions 负责发布
 
 版本源是 `gradle.properties` 的 `mod_version`。Forge 1.20.1 分支发布 tag 使用 `v<mod_version>-forge1.20.1`，例如 `v1.7.2.1-forge1.20.1`。发版前必须同步 `mod_version`、`CHANGELOG.md`、README 双语门面、教程、示例数据包和本文档。
-
-### 2.1 第三方兼容层
-
-- **MaidFileManager（车万女仆档案管理器）迁移 SPI**：`com/github/touhoumaidaffection/compat/maidfm/BondMaidMigrationProvider` 实现 `io.github.zgxhzhr.maidfm.spi.MaidMigrationProvider`，把 `BondData`（挂在主人玩家 persistentData 上、不在女仆实体 NBT 内）按女仆 UUID 导出/导入。导出的是 `maids.<女仆UUID>` 子树副本、导入时整体写回并刷新 `LastSeen`，对外格式始终是「base 名 → 值」的 compound，与旧版扁平键时代一致（旧导出文件仍可导入）；base 名常量集中在纯逻辑类 `BondKeys`，便于单测。
-- **迁移边界：画像随迁、运行态不随迁**：`exportMaidData` 取子树副本后剔除 `BondKeys.RUNTIME_KEYS`（见 6）与空字符串值；`importMaidData` 防御性再剔一遍（旧 `.maid` 文件里可能带着运行态键），然后**整体替换**目标子树（源里没有的键在目标上即为缺失，因此导入仍能清掉多余值）并刷新 `LastSeen`。理由：运行态键是会话/世界相关的绝对时间，随 `.maid` 迁到另一只女仆或另一个存档会带上别处的会话时间戳，导致新女仆的礼物计时或「今天是否已亲过」判定被污染。导入仍是整体替换语义，不是合并。
-- SPI 两个接口源文件 vendored 到 `src/main/java/io/github/zgxhzhr/maidfm/spi/`（包名不变），**仅供编译期**：`build.gradle` 的 `jar` 任务用 `exclude 'io/github/zgxhzhr/**'` 把它们排除出产物，运行期只由管理器的 jar 提供这两个类。原因是重复同名类在不同加载器/类加载器下不保证被去重，若 TMA 自带一份，可能出现「TMA 注册进自己的 registry、管理器读自己的 registry」的静默失联。
-- 注册入口在 mod 构造器内、紧邻 `BondAbilityManager.registerDefaults()`，并用 `ModList.get().isLoaded("maid_file_manager")` 做软依赖守卫，避免管理器缺失时类加载期解析 SPI 类型抛 `NoClassDefFoundError`。
-- 不做迁移的部分：`world/generated_morning_kiss/<uuid>/` 的 AI 台词/TTS 缓存（可再生、有 `MAID_REVISIONS` 失效机制）、玩家粒度的 `MorningKissSelectedWindowId/MaidId`、玩家 Capability/Attachment 的每日救护次数。
 
 ## 3. 目录拓扑
 
@@ -42,9 +34,9 @@ src/main/java/com/github/touhoumaidaffection
 ├─ TouhouMaidAffection.java
 ├─ ModConfig.java
 ├─ ModCapabilities.java / ModEffects.java / ModEntityTypes.java / ModSounds.java
+├─ ai/mimo
 ├─ bond
 │  ├─ BondData.java / BondManager.java
-│  ├─ BondKeys.java / BondDataMigration.java / BondRetention.java
 │  ├─ VoicePoolIds.java / VoicePoolSelection.java
 │  ├─ ability
 │  ├─ lap
@@ -90,15 +82,15 @@ examples/TMA-Custom-Voice-Pack
 
 ## 4. 启动与注册层
 
-`TouhouMaidAffection.java` 是启动门面，负责配置注册、注册表、payload、事件监听和 tick 入口装配。它不应承载业务规则。
+`TouhouMaidAffection.java` 是启动门面，负责配置注册、注册表、payload、事件监听、TLM AI 扩展和 tick 入口装配。它不应承载业务规则。
 
-`ModConfig.java` 保存全局规则、默认阈值、亲吻冷却与右键入口开关、好感收益、亲吻音效/早安吻语音/残血救护/语音试听音量、随机礼物池策略、残血救护绝对/百分比阈值、早安吻 AI/TTS 运行时开关、提示词、显示语言与配音语言、扫描频率、缓存策略。它不保存玩家或女仆的运行结果。
+`ModConfig.java` 保存全局规则、默认阈值、早安吻 AI/TTS 运行时开关、提示词、语言、扫描频率、缓存策略、MiMo 默认值与兼容项。它不保存玩家或女仆的运行结果。
 
 注册层的原则是“装配而非决策”：具体触发条件、资源解析、能力逻辑和错误回退应下放到 handler、service 或领域对象。
 
 ## 5. 亲吻主链
 
-`KissMaidHandler` 是亲吻服务端主入口，负责冷却、好感、亲吻音效播放、粒子 payload、少女祈祷触发与早安吻复用逻辑。公主抱亲吻按键和准星目标亲吻按键最终都收敛到这里，避免规则分叉；潜行空手右击入口不再拦截 TLM 女仆交互。亲吻音效响度由全局配置控制，早安吻数据包仍只负责选择 sound event。
+`KissMaidHandler` 是服务端亲吻主入口，负责冷却、好感增长、亲吻音效/粒子 payload、少女祈祷触发和早安吻复用逻辑。普通右键、公主抱亲吻按键、准星目标亲吻按键都应收敛到这里，避免规则分叉。
 
 客户端的 `KissKeyAction` 在共享默认键位时选择公主抱亲吻或准星亲吻入口。服务端的 `KissTargetedMaidRequestHandler` 必须重新校验实体存在、归属、距离、视线和正常亲吻规则，不能信任客户端命中结果。
 
@@ -106,15 +98,7 @@ examples/TMA-Custom-Voice-Pack
 
 `BondData` 保存玩家维度、女仆粒度的长期档案：羁绊等级、解锁能力、语音选择、早安吻计划、礼物队列、膝枕姿态等。
 
-存储布局：数据挂在主人玩家 persistentData 的 `touhou_maid_affection.bond` 根 compound 下，**女仆粒度数据按女仆嵌套**在 `maids.<女仆UUID>.<base>` 子树里，**玩家粒度数据**（`MorningKissSelectedWindowId` / `MorningKissSelectedMaidId`）留在根上。所有 base 名常量集中在纯逻辑类 `BondKeys`，不再散落字面量。
-
-**画像 vs 运行态**：`BondKeys.RUNTIME_KEYS` 集中列出会话/世界相关的运行态与调度键——礼物计时（`RandomGiftLastWallClock` / `RandomGiftLastDelivery` / `RandomGiftLastIntervalMinutes`）、早安吻窗口标记（`MorningKissScheduledWindow` / `MorningKissScheduledAttemptTick` / `MorningKissLastAutoAttemptGameTime` / `MorningKissLastSuccessWindow` / `MorningKissLastFailedWindow`）与本地 prune 记账 `LastSeen`。它们都是「上次何时发生」的绝对挂钟毫秒或游戏刻，只在产生它的会话/存档里有意义，因此**不参与 `.maid` 迁移**（详见 2.1）。待发礼物队列 `RandomGiftQueue` 不在其中：那是耐久状态，属于画像，随女仆迁移。空字符串值也不落盘/不导出（这些键的 getter 缺省值本就是空串，不写入与写空串读取等价）。
-
-根上的 `SchemaVersion` 记录存储结构版本（当前 `2`）。`BondData.of(player)` 每次读取都会检查一次；版本缺失或 `< 2` 时由纯逻辑类 `BondDataMigration` 执行一次性迁移：遍历根上的键，凡能解析为 `<base>_<女仆UUID>` 的旧扁平键，**先**把值写入 `maids.<uuid>.<base>`、**成功后再**移除旧键（先写后删，中途失败不丢数据）；玩家粒度键与无法解析的键原样保留；迁移完成后写入 `SchemaVersion=2`，因此**幂等**且可安全重入。旧存档无损升级，不需要任何手动步骤。
-
-生命周期：`maids.<uuid>.LastSeen`（epoch millis）在 `BondManager.syncMaidProfile` 时刷新。**不会**在女仆死亡 / 卸载 / 换主人时自动删除数据（TLM 的灵魂玩偶、椅子等场景会出现临时移除，自动删除会丢数据）；残留数据由显式的 `/tma bond prune [days]`（默认 90 天，权限等级 2）清理：删除 `LastSeen` 早于阈值的女仆子树，缺失 `LastSeen` 的历史数据视为过旧一并删除；`days <= 0` 表示只统计不删除。阈值判定抽在纯逻辑类 `BondRetention` 中，便于单元测试。
-
-`BondManager` 是语义化门面，屏蔽底层 persistentData key。新增持久字段应集中在 `BondData` 或相邻子结构中，避免 handler、service 或 screen 直接拼 key；新增 base 名一律加到 `BondKeys`。
+`BondManager` 是语义化门面，屏蔽底层 persistentData key。新增持久字段应集中在 `BondData` 或相邻子结构中，避免 handler、service 或 screen 直接拼 key。
 
 `bond/ability` 描述能力名称、成本、解锁条件和二级行为入口。复杂流程应放入 `bond/service`、`bond/rescue`、`bond/lap` 或 `handler`。
 
@@ -122,22 +106,19 @@ examples/TMA-Custom-Voice-Pack
 
 `bond/service` 承载跨 tick、跨时间窗或可重载资源相关的流程：
 
-- `MorningKissService`：早安吻时间窗调度、寻路和亲吻任务推进。
-- `MorningKissDialogueService`：生成缓存、即时 AI、数据包台词与内置台词之间的回退链，以及聊天气泡/聊天栏/动作栏显示策略。
-- `MorningKissVoiceService`：每名女仆的语音池解析、顺序/随机选择、数据包/TLM 回退和客户端播放 payload 分发。
-- `MorningKissGeneratedDialogueService`：基于 TLM LLM/TTS 站点异步预生成台词和 TTS 音频；维护 MAID_REVISIONS 实现女仆级缓存失效，支持 LLM、跨语言翻译与 TTS 三阶段 IN_FLIGHT 跟踪，在服务器启动时从磁盘恢复缓存、关闭时持久化。显示语言与配音语言不同时，先生成显示文本，再用单次批量翻译保持逐行映射，最后以 `tts_text` 请求 TTS；翻译失败则安全降级为纯显示文本。
-- `MorningKissGeneratedDialogueLanguage`：早安吻 AI 显示/配音语言的纯逻辑归一化、继承规则、翻译 prompt 与严格 JSON 数组解析。支持 `inherit`、`tlm/auto/default` 和显式语言代码。
-- `MorningKissGeneratedDialogueCache`：保存女仆粒度的运行时生成台词、独立 `tts_text` 和 TTS 语音缓存。支持消耗/非消耗两种取出模式（CACHE_CONSUME_ON_USE），提供女仆级、池级、条目级的清理与语音剥离操作。缓存容量受 maxLinesPerPool 和 aiDialogueCacheTargetPerPool 双重约束。实现 snapshot() / replaceAll() 接口以支持磁盘持久化。统计报告通过 stats() 按女仆和语言分组输出。读取（`pollRandom` / `peekRandom` / `hasCachedLine`）与满度判定（`countMatching`、`addIfBelowTarget`）均按当前解析出的显示/配音语种过滤，旧语种条目不再阻塞重新预热（条目保留，可手动清理）。
-- `MorningKissGeneratedDialogueStorage`：将运行时 AI 生成缓存持久化到 `world/generated_morning_kiss/{maid_uuid}/{pool}/` 目录下，每条条目写为 `001.json`（元数据）+ 同编号 `.ogg`/`.mp3`（语音），格式兼容手动编辑。路径遍历防护通过 `normalize()` + `startsWith()` 检查实现。服务器启动时自动加载、服务器关闭时自动保存。
+- `MorningKissService`：早安吻调度、寻路、亲吻执行、台词选择与语音触发。
+- `MorningKissGeneratedDialogueService`：基于 TLM LLM/TTS 站点异步预生成台词和 TTS 音频；默认仅文本生成跟随 TLM 聊天语言；当后台预生成会生成远程 TTS 时，待合成文本跟随 TLM TTS 语言按钮，确保传给 TTS 的文本语种与请求语种一致；只有 `aiDialogueLanguage` 显式配置为具体语言时才统一覆盖。
+- `MorningKissGeneratedDialogueLanguage`：早安吻 AI 语言配置的纯逻辑归一化与 prompt 语言覆盖规则。
+- `MorningKissGeneratedDialogueCache`：保存服务端运行时生成结果，缓存键必须至少包含女仆 UUID 与时间池，避免多名女仆共享同一生成池。
+- `MorningKissGeneratedDialogueStorage`：把早安吻 AI 生成文本与 TTS 音频持久化到世界目录下的 `generated_morning_kiss/<maidUuid>/<pool>/`，以 `001.json` + 可选 `001.ogg/mp3` 的形式提供外部可编辑入口；它是生成缓存的磁盘镜像，不属于数据包，也不触发 `/reload`。
 - `MorningKissProfileParser` / `MorningKissProfileData`：读取早安吻静态数据包 profile。
-- `InteractionVoiceProfileParser` / `InteractionVoiceProfileData`：早安吻与残血救护共享的数据包 OGG 语音解析。
-- `RandomGiftService`：随机礼物积累与投递。默认礼物来源是显式物品标签池；广泛注册表抽样是可选兼容模式，仅默认过滤破坏沉浸感的技术/管理物品。显式礼物池可覆盖默认过滤，黑名单仍具有最终否决权。
+- `InteractionVoiceProfileParser` / `InteractionVoiceProfileData`：解析早安吻和残血救护共享的数据包 OGG 语音池。
+- `RandomGiftService`：随机礼物积累、选择和投递。
 
 早安吻边界：
 
 - 数据包负责静态台词、亲吻 sound event 和预录 OGG。
-- 全局配置负责亲吻 sound event 与早安吻语音的响度：亲吻音效跟随 `cooldown.kissSoundVolume`，早安吻 TLM/数据包/AI-TTS 语音跟随 `morningKissBehavior.voiceVolume`。
-- `morningKissBehavior` TOML 配置负责运行时 AI/TTS、提示词、语言、扫描频率、缓存目标数、消费策略和失败回退；语种只有 `displayLanguage`（文本语种）与 `voiceLanguage`（配音语种）两项，`auto`（以及等价的旧关键字 `tlm`/`inherit`/`default`）表示跟随游戏语言 / 女仆的 TLM AI 语言设置，具体 locale 表示 TMA 统一覆盖；`aiDialogueCacheTargetPerPool` 同时是预热目标和最终入池硬上限，默认每名女仆三个时间池合计最多 12 条生成缓存，不因文本/语音语种分组而扩容；`aiDialogueCacheConsumeOnUse=false` 时早安吻触发复用缓存且不消耗。缓存读取与满度判定均按当前解析出的显示/配音语种过滤，语言变更后会自动按新语种重新预热，无需手动清理（旧语种条目保留，可手动清理）；提示词变更仍需手动清理。
+- `morningKissBehavior` TOML 配置负责运行时 AI/TTS、提示词、语言、扫描频率、缓存目标数、消费策略和失败回退；`aiDialogueLanguage=tlm/auto/default` 表示跟随 TLM 本体语言设置，其中生成式语音缓存的文本和语音均以 TLM TTS 语言按钮为准，具体 locale 表示 TMA 统一覆盖；`aiDialogueCacheTargetPerPool` 同时是预热目标和最终入池硬上限，默认每名女仆三个时间池合计最多 12 条生成缓存，不因文本/语音语种分组而扩容；`aiDialogueCacheConsumeOnUse=false` 时早安吻触发复用缓存且不消耗，只有清理缓存后才重新预热。
 - `/tma morning_kiss` 命令组提供 AI/TTS 状态、生成缓存明细、运行中请求、AI/TTS 开关和缓存清理入口；`clear_ai_cache` 保留全清入口，同时支持按女仆、按时间池、按条目删除，以及只清除某条生成语音但保留文本。清理生成缓存不改变数据包或 BondData，持久化镜像会随内存缓存同步更新。
 - AI/TTS 失败只影响增强体验，不能阻断静态台词或已有语音。
 
@@ -147,7 +128,7 @@ examples/TMA-Custom-Voice-Pack
 
 救援语音当前使用功能级数据包语音池：触发 payload 可携带命中的数据包 OGG 字节；若没有命中，则回退到 TLM 音包或兜底 sound event。旧的服务器文件同步服务已移除，新开发不要恢复该路径。
 
-`EmergencyRescueSoundPlayer` 只处理客户端播放策略，不决定救援是否成立。数据包语音、TLM 音包语音和兜底 sound event 的响度统一服从残血救护全局音量配置。
+`EmergencyRescueSoundPlayer` 只处理客户端播放策略，不决定救援是否成立。
 
 ## 9. 膝枕
 
@@ -163,15 +144,12 @@ examples/TMA-Custom-Voice-Pack
 
 `BondMaidContainerScreen` 是羁绊页总屏幕；`screen/page` 承载一级/二级页控制；`screen/component` 提供按钮行、滚动列表、弹窗、下拉框、语音池列表等复用组件。
 
-`BondGuiTokens` 是所有羁绊 UI 的唯一配色与尺寸来源（业务代码不得硬编码 ARGB）：暖木色为面板/控件底，玫瑰色（`COLOR_ACCENT`、`*_ON_*`、`*_SELECTED_*`、`PRIMARY_BUTTON_*`）只作交互面与强调，金色（`HIGHLIGHT_TEXT`、`COLOR_TEXT_SELECTED`、`TAG_SERVER`）只作高亮文字与作用域标签。`textures/gui/settings_panel.png`（1020×690 RGBA，烘入 0.90 不透明度，1:1 绘制）是设置面板的整页底图：外框、表头分隔线、侧栏分隔线、footer 分隔线、内容区与左下角写实玫瑰全部烘在图里，代码不再自绘边框与分隔线，也没有独立的玫瑰贴图。
-
 语音配置页是动态语音池页面：
 
 - 服务端同步数据包候选项。
 - 客户端补充 TLM 音包候选项。
 - 玩家保存的是每名女仆的池选择和播放模式，而不是全局固定文件名。
 - 试听动作由可改键 `key.touhou_maid_affection.voice_preview` 和右键列表项触发。
-- 内置亲吻音效试听跟随 `cooldown.kissSoundVolume`；数据包与 TLM 语音试听跟随 `voicePreview.volume`。
 
 音频播放分三类：
 
@@ -181,20 +159,15 @@ examples/TMA-Custom-Voice-Pack
 
 `BondMaidGuiTabHandler` 运行时扫描可用 tab 位置，降低与 TLM 或其他扩展页签冲突。
 
-`TmaSettingsScreen` 是与女仆无关的全局设置面板，作为**独立 Screen** 从羁绊页顶部右侧（原 TMA AI Hub 按钮槽位，50×12）的「设置」按钮进入（`BondPrimaryPageHost#openSettingsPage` 内部改为 `Minecraft#setScreen(new TmaSettingsScreen(this))`，不走 `BondSecondaryPageRegistry` 的能力页流程）：面板不再嵌在女仆 GUI 内，而是自带全屏压暗背景的独立窗口，关闭（footer「完成」/ESC/点击压暗区）时 `setScreen` 回来源界面。模态框比其它二级页宽且高（340×230，`BondGuiTokens.SETTINGS_MODAL_WIDTH` / `SETTINGS_MODAL_HEIGHT`）：左侧 50px 导航轨按「状态 / 功能 / 语音 / 音量」四个 tab 切换单区内容（「状态」在第一位且打开面板默认选中）。面板 chrome（外框、表头分隔线、侧栏分隔线、footer 分隔线与左下角玫瑰）全部来自单张底图 `textures/gui/settings_panel.png`（1020×690 RGBA，烘入 0.90 不透明度，按面板 340×230 逻辑尺寸在 GUI scale 3 下 1:1 一次 blit），代码不再自绘边框与分隔线、也没有独立玫瑰贴图；`BondGuiTokens.MODAL_TITLE_HEIGHT` 20 与 `NAV_WIDTH` 50 分别对齐底图 20/230 的表头分隔线与 50/340 的侧栏分隔线。它复用 `BondModalPage` / `BondDropdown` / `BondGuiTokens`，并新增自绘 `BondSlider`（88×13，数值金色居中）与胶囊开关。开关、语种与缓存策略是**服务端权威**项，走 `TmaSettingsRequestPayload` / `TmaSettingsStatePayload`，点击即时发包；音量是纯客户端项，直接写 `ModConfig` 并 `SPEC.save()`。行内状态点不依赖任何协议扩展：客户端记录 `pending`（key→请求值），收到状态回推后逐个比对——相等即「已保存」（不画点），不等即「被拒绝」（红点约 3 秒后自动清除），超过 5 秒仍无回推按超时视为被拒绝；存在请求中/被拒项时 footer 的「完成」左侧出现纯文字「重载」（清本地标记并 `requestSync()`）。白名单为 **9 个开关 + 2 个语种 + 1 个自由文本 + 2 个整数 = 14 项**：面板语种只暴露「文本语种」（`morning_kiss.display_language`）与「配音语种」（`morning_kiss.voice_language`）；`morning_kiss.text_prompt` 是早安吻台词模板（`Type.TEXT`，上限 1024 字符，空值写回内置默认）；新增 `Type.INT`（只接受纯数字，逐键按 `ModConfig` `defineInRange` 的上下界校验，越界/非数字整包拒绝）：`morning_kiss.cache_target_per_pool`（1..8）与 `morning_kiss.cache_scan_interval_ticks`（20..72000）；AI 专用语种 `morningKissBehavior.aiDialogueLanguage` / `aiDialogueVoiceLanguage` 仍是有效的 toml 配置（AI 语言解析逻辑不变），但已不再出现在面板白名单里，需要时请手改 toml。布局参数集中在页面顶部常量，内容区可滚动（下拉框与滑块通过 `setPosition` 跟随滚动偏移）；展开的下拉弹层不做面板内容区裁剪，而是夹在屏幕范围内——向下会溢出屏幕底部时翻到表头之上渲染，命中测试/高亮/点击与实际渲染位置一致，所有条目可达。
+## 11. AI / MiMo 适配层
 
-「语音」tab 在语种下拉框下方增加「台词提示词」区：一个原版 `MultiLineEditBox` 编辑 `morning_kiss.text_prompt`（模板占位符 `{maid}` 女仆名 / `{player}` 玩家名 / `{pool}` 时段 / `{time}` 允许时段），下方整行是占位符图例（占满内容区整宽、不再与按钮同行，因此中英双语都完整显示不被截断；「恢复默认」文字按钮移到上方标签行右对齐，复用 `drawTextButton` 通用模板，无权限置灰）（把模板写回 `ModConfig.BOND_MORNING_KISS_AI_DIALOGUE_PROMPT` 的内置默认；客户端用 `getDefault()` 本地解析默认串，使 pending 比对能匹配服务端回推）。编辑框内右下角显示字数计数（次要文字色）：`MultiLineEditBox` 自带的计数画在框下方会与图例行重叠，因此这里关闭原版字符上限（`Integer.MAX_VALUE`），由面板自绘计数并在每次按键/提交前把长度夹到 `TmaSettingsKeys.MAX_TEXT_LENGTH`。提交时机为编辑框失焦（点击别处 / 切换 tab / 关闭面板），聚焦期间服务端回推不覆盖输入。该 tab 底部「AI 站点」区只有**唯一**一个 AI 入口按钮「打开车万女仆的 AI 设置」，跳转到 TLM 原生 `AIChatSettingsHubScreen.openDefault(this, AvailableSites.LLM_SITES, AvailableSites.TTS_SITES, false)`，parent 传本面板，关闭后回到这里：站点 / 密钥 / 模型 / TTS 音色全部由 TLM 原生页面配置，TMA 只提供跳转，不自建站点表单。该 tab 的全部元素（语种两行 + 台词提示词区 + AI 站点区）按**放宽后的间距常量**排版（`SECTION_HEADER_HEIGHT` 15、`ROW_GAP` 6、`LANGUAGE_ROW_HEIGHT` 20、`PROMPT_BOX_HEIGHT` 49、`PROMPT_ROW_HEIGHT` 14），总高 208px > 内容可视高 172px（230 模态高 − 20 标题 − 8 内容上留白 − 30 footer），因此打开后按需**内部滚动**（间距放宽后不再追求「免滚动」，功能/状态/语音三个 tab 超出可视高一律走面板滚动）。编辑框高度取 `9 × 行数 + 4`（49 = 5 行 + 内边距），子类 `BondPromptBox` 把滚动步长与滚动上限都吸附到 9px 行网格（`scrollRate()` = 9、`getMaxScrollAmount()` = `9 × (总行数 − 可见行数)`、`setScrollAmount()` 吸附到最近整行），因此文字永远按整行显示、不会从行中间被切断；光标可见性沿用原版 `MultilineTextField` 的 cursor listener 自动滚动，因为每次偏移都经过吸附，自动滚动同样落在行网格上。**滚轮事件的区分规则**：`TmaSettingsScreen#mouseScrolled` 先判断指针是否落在编辑框矩形内（`promptBox.isMouseOver(...)`），是则把事件转发给 `promptBox.mouseScrolled(...)` 并 `return true`（只滚框内文本、不再冒泡到面板），否则才走原有逻辑滚动面板；编辑框只占「语音」tab 的一小块矩形，框内滚动与面板滚动互不干扰。
+`ai/mimo` 是 MiMo 协议适配层，通过 TLM 扩展入口注册 `tma_mimo_chat` 与 `tma_mimo_tts`：
 
-「状态」tab 是**纯只读**视图（导航第一位、打开面板默认选中），把 `/tma morning_kiss status` 与 `/tma morning_kiss cache` 的信息原样搬进面板：开关（早安吻 / AI 台词 / AI 语音 / 立即兜底）、语种（`文本语种` / `配音语种`，未配置显示 `auto（跟随游戏语言）` / `auto（跟随女仆 AI 设置）`）、缓存策略（每池目标条数 / 扫描间隔 / 消费即用）、缓存统计（条目总数与语音/纯文本拆分、女仆数 / 在途请求数 / 版本号 revision）与按女仆列表（名字 + 各时段池条目数 + 该女仆总条目/目标 + 行内「清空」按钮）。这些行一律用 `addStatusKv` 渲染成纯文本（开关与「消费即用」显示「开 / 关」；没有胶囊开关、没有下拉框、没有数值框、也没有 pending 状态点），整页唯一可点的只有按女仆行的「清空」按钮。只读行的值与女仆行文本一律按「控件左边界 − 间距」用 `clip(...)` 截断并补省略号（名字列与计数列分列右对齐；同名女仆的名字列追加 `#` + UUID 前 4 位十六进制去歧义，由纯逻辑类 `TmaMaidLabels` 生成，空名回退文案由调用方传入本地化串 `bond.settings.status.maid.unknown`），文本不会压到「清空」按钮下面。对应的**可编辑**控件全部集中在「功能」tab：8 个布尔开关按白名单顺序排列，末尾是「缓存策略」区（`bond.settings.section.cache_policy`），放 `每池目标条数` / `扫描间隔` 两个整数（紧凑数值控件 `BondNumberField`：单行 `EditBox`、只允许数字、失焦提交、提交前按 `TmaSettingsKeys.intBounds` 夹取、右侧显示单位如 `1200t`；范围 20..72000 用滑块精度不可用，故不做滑块）与 `消费即用` 胶囊开关；`morning_kiss.cache_consume_on_use` 被显式排除在通用布尔列表之外（`TOGGLE_KEYS` 过滤），保证每个键在整个面板里只有一个控件、不会重复出现。数据来源：只读行来自 AI 状态通道（`TmaAiStatusPayload`，开关 / 语种 / 缓存策略是服务端 `ModConfig` 的生效值），缓存统计来自 `MorningKissGeneratedDialogueService.cacheStats()`，按女仆列表用 TLM 的 `MaidBackupsManager.getMaidIndexMap(player)` 限定为**该玩家名下**的女仆（名字取自备份索引，缺失时回退缓存标签）。按女仆行里每个时段池的计数标签取自 `bond.settings.status.pool.<池名>`（`DialoguePool` 的 `MORNING`/`EVENING`/`GENERAL` 三个值都必须有中英键，缺失会渲染成原始 key；`TmaSettingsLangKeysTest` 逐值断言中英 lang 都存在这些键）。footer 为「刷新 / 清空全部 / 完成」：刷新重发 `TmaAiStatusRequestPayload`；清空全部与行内清空走 `TmaAiCacheClearPayload`（scope = ALL / MAID），服务端要求权限等级 2、打印审计日志，并**复用与 `/tma morning_kiss clear_ai_cache` 完全相同的** `MorningKissGeneratedDialogueService.clearCache(...)` 方法，随后回推一份新状态，所有打开的状态 tab 自动收敛。
-
-## 11. AI 集成
-
-早安吻的 LLM/TTS 一律使用车万女仆自己的 AI 站点（TLM 原生支持类 OpenAI 站点）；TMA 不再注册自己的 provider，也不提供站点表单。语音音色由 TLM 站点配置决定（voice/model；GPT-SoVITS 站点另有其原生的 prompt 字段）：
-
-- 早安吻的台词生成与 TTS 请求全部走 `maid.getAiChatManager()` 内 TLM 自己的站点选择，TMA 不介入协议层。
-- 羁绊页不再提供 AI 入口按钮：原右上角按钮已整条删除；全局唯一的 AI 入口是设置面板「语音」tab 的「打开车万女仆的 AI 设置」按钮，它只是 `setScreen` 到 TLM 原生 `AIChatSettingsHubScreen`，站点表单仍由 TLM 提供。
-- API key、启用状态与站点保存全部由 TLM 管理（`config/touhou_little_maid/sites/*.json`）。
-- 旧版 TMA 注册过的 `tma_mimo_chat` / `tma_mimo_tts` 站点条目在 TLM 读取时因缺少对应 serializer 被跳过（仅记 error 日志），随后 TLM 保存站点时即被清除；无需玩家手动删除。
+- LLM 侧复用 TLM OpenAI 站点编辑器的表单体验，但实际请求由 `MimoLLMClient` 发起。
+- `LLMSiteEditorScreenMixin` 只解决 TLM 编辑器保存后站点类型被普通 OpenAI 类型覆盖的问题，作用域必须保持窄。
+- TTS 侧实现 TLM 1.5.2 的旧接口，解析 MiMo chat-completions 风格响应中的 base64 音频后交给 TLM/TMA 播放链路；从 `TTSConfig.language` 传入的语言必须写入请求体与 voice prompt，避免回落到 TLM 站点默认语种。
+- MiMo TTS 默认请求 MP3；远程响应会被格式校验，不能把不可播放格式塞进客户端队列。
+- API key、站点启用状态、站点保存仍由 TLM 管理；TMA 只提供站点类型、默认 URL、默认模型、格式和羁绊页跳转入口。
 
 TMA 不接管 TLM STT，也不把远程服务失败变成阻断错误。
 
@@ -237,15 +210,6 @@ data/touhou_maid_affection/emergency_rescue/voices/*.ogg
 - 单个数据包语音有大小限制，过大文件会被跳过并记录警告。
 - 旧 `rescue_sound/profile.json` 仅保留兼容入口，新开发优先使用 `emergency_rescue/profile.json`。
 
-早安吻数据包自 1.7.4.0 起支持语言标签（纯增量，旧写法仍兼容）：
-
-- `dialogue.<pool>` 元素：`"文本"`（未标记/通配）或 `{"text": "...", "language": "zh_cn"}`。
-- `voice_files` 元素：`"x.ogg"`（未标记/通配）或 `{"file": "x.ogg", "language": "ja_jp", "text": "可选字幕", "text_language": "zh_cn"}`。
-- 语种归一化复用 `MorningKissGeneratedDialogueLanguage.normalizeLocaleCode`（小写、`-` → `_`，`tlm`/`auto`/`default` 视为未指定）；`voice_files[].text` 长度按 `BondDataLimits` 有界（≤256），语音条目上限 64。
-- 选择规则（由 `MorningKissDataPackEntries.selectByLanguage` 承载，纯逻辑可单测）：目标语种显式时按「语言匹配 → 未标记 → 全部」；`auto`（空目标）原样返回，保持 1.7.3.0 行为。`dialogue_mode=append` 时内置 i18n 台词按「语言 = 客户端语言」并入同一候选池。
-- 语音配对字幕：`voice_files[].text` 仅在该语音被选中播放时作为字幕，`text_language` 与目标显示语种不一致时退回随机台词。
-- 语种只有两项全局开关：`morningKissBehavior.displayLanguage`（文本语种：内置数据包台词 + AI 台词）与 `voiceLanguage`（配音语种：数据包语音 + AI 合成语音）。`auto` 时文本语种跟随游戏语言、配音语种跟随女仆的 TLM AI 语言设置（AI 台词回退到女仆 TLM 聊天语言、AI 合成回退到 TLM TTS 语言）；显式 locale 固定该语言。旧关键字 `tlm` / `inherit` / `default` 仍等价于 `auto`。TLM 音包无语言元数据，不参与筛选。
-
 ## 14. 网络边界
 
 `network/*Payload.java` 只定义协议字段与编解码，不写业务。所有权限、归属、距离、成本、冷却、日次数与触发条件必须在 `handler`、`service` 或领域层判断。
@@ -259,14 +223,7 @@ data/touhou_maid_affection/emergency_rescue/voices/*.ogg
 - `MorningKissVoicePlayPayload`：TLM 音包语音播放。
 - `MorningKissDataVoicePlayPayload`：数据包或运行时 TTS 字节语音播放。
 - `MaidRescuePopPayload`：救援弹出、救援者档案与可选救援音频字节。
-- `VoicePreviewRequestPayload` / `VoicePreviewDataPackPlayPayload`：语音配置页的数据包语音试听请求与回放，服务端负责女仆归属、能力解锁和文件存在性校验。
-- `TmaSettingsRequestPayload`：客户端设置请求（C2S）。空 `entries` 表示只读状态；非空表示请求修改。服务端要求权限等级 2，逐条按白名单与取值语法校验，**任一条不合法整包拒绝**，合法则写入 `ModConfig` 并 `SPEC.save()`，逐条打印审计日志 `[TMA Settings] player=<name> key=<k> old=<a> new=<b>`。
-- `TmaSettingsStatePayload`：服务端回推完整生效状态（S2C），包含全部白名单键的当前值与 `canEdit`（是否 OP）。只读请求也会收到该包。
-- 两个设置包的条目列表编解码复用纯逻辑类 `bond/settings/TmaSettingsWire`（≤ 32 条），netty `ByteBuf` 适配在 `network/TmaSettingsByteBuf`；白名单与取值校验在纯逻辑类 `bond/settings/TmaSettingsKeys`，逻辑键到 `ModConfig` 的映射在 `bond/settings/TmaSettingsResolver`。
-- `TmaAiStatusRequestPayload`：只读 AI 状态请求（C2S，空包）。
-- `TmaAiStatusPayload`：服务端回推的只读 AI 状态（S2C）。`maids` **只包含该玩家名下**的女仆（uuid + 名字 + 各时段池条目数 + 总条目/目标），其余为服务器全局计数；`canClear` 表示接收者是否可清缓存（权限等级 2）。
-- `TmaAiCacheClearPayload`：清缓存请求（C2S，`scope` = ALL / MAID / POOL）。服务端要求权限等级 2、打印审计日志，并复用与 `/tma morning_kiss clear_ai_cache` 相同的 `MorningKissGeneratedDialogueService.clearCache(...)`，随后回推一份 `TmaAiStatusPayload`。
-- 三个 AI 状态包的编解码复用纯逻辑类 `bond/settings/TmaAiStatusWire`（maids ≤ 64、pools ≤ 8、字符串 ≤ 128），netty `ByteBuf` 适配在 `network/TmaAiStatusByteBuf`。
+- `VoicePreviewRequestPayload` / `VoicePreviewDataPackPlayPayload`：语音列表试听请求与数据包试听字节下发。
 
 ## 15. 演进规范
 
@@ -282,8 +239,9 @@ data/touhou_maid_affection/emergency_rescue/voices/*.ogg
 
 最需要持续治理的模块：
 
-- `MorningKissService`：对话与语音策略已拆出，剩余复杂度集中在自动时间窗调度和进行中任务推进；后续如继续增长，应优先分离 scheduler 与 task runner。
+- `MorningKissService`：调度、任务推进、对话、语音策略和多个回退路径仍集中在一个服务里。
 - `BondMaidContainerScreen` 与二级页：页面切换、tooltip、弹窗、动态语音池、试听动作都在此附近集中。
-- `BondData`：长期状态字段持续增多；key 常量已收敛到 `BondKeys`、存储已改为按女仆嵌套，后续新增字段继续走 `BondKeys` + 女仆子树，避免回到扁平键。
+- `BondData`：长期状态字段持续增多，应继续收敛 key 常量与子结构。
+- `ai/mimo`：依赖 TLM AI 旧接口与编辑器行为，后续 TLM 升级时需要优先回归。
 
-后续重构优先级：按增长情况继续把早安吻调度器与任务执行器分离；再把羁绊页拆成更独立的 page controller 与状态对象。
+后续重构优先级：先把早安吻拆成调度器、任务执行器、对话策略、语音策略四块；再把羁绊页拆成更独立的 page controller 与状态对象。

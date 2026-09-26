@@ -12,11 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(EntityRenderDispatcher.class)
 public abstract class EntityRenderDispatcherLapPillowMixin {
-    @Inject(
-            method = "m_114384_(Lnet/minecraft/world/entity/Entity;DDDFFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
-            at = @At("HEAD"),
-            remap = false
-    )
+    @Inject(method = "render", at = @At("HEAD"))
     private <E extends Entity> void touhou_maid_affection$renderHead(
             E entity,
             double x,
@@ -32,11 +28,7 @@ public abstract class EntityRenderDispatcherLapPillowMixin {
         LapPillowClientState.renderingDepth++;
     }
 
-    @Inject(
-            method = "m_114384_(Lnet/minecraft/world/entity/Entity;DDDFFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
-            at = @At("TAIL"),
-            remap = false
-    )
+    @Inject(method = "render", at = @At("TAIL"))
     private <E extends Entity> void touhou_maid_affection$renderTail(
             E entity,
             double x,

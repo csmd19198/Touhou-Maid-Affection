@@ -5,7 +5,7 @@
 <h1 align="center">Touhou Maid: Affection - 女仆亲亲</h1>
 
 <p align="center">
-  <b>为车万女仆（Touhou Little Maid）带来亲密互动、羁绊成长与深情陪伴。</b>
+  <b>为 Forge 1.20.1 的 Touhou Little Maid 增加亲密互动、羁绊能力与长期陪伴感。</b>
 </p>
 
 <p align="center">
@@ -22,95 +22,104 @@
 
 ---
 
-## 模组介绍
+## 最新版本
 
-**Touhou Maid: Affection** 是车万女仆（Touhou Little Maid）的亲密互动与羁绊扩展模组。
+`1.7.2.2-forge1.20.1` 是 Forge 1.20.1 分支基于 1.7.2 功能线的短期增强版，重点完善自定义语音包、早安吻 AI 化、语音试听体验，并修复早安吻 AI/TTS 语言缓存问题：
 
-你可以对女仆表达爱意、亲吻提升好感。好感达到一定程度后可开启专属羁绊系统，解锁休闲膝枕、早安吻问候、残血紧急救护以及贴心随机礼物等能力。模组还深度接入了车万女仆的 AI 对话与语音合成体系，支持数据包自定义台词及语音。
+- 早安吻与残血救护拆分为各自独立的数据包语音池。
+- 早安吻支持静态台词包，台词可使用 `{maid}` 与 `{player}` 占位符。
+- 早安吻可选 AI 台词与 TTS 预生成，复用 TLM AI 站点。
+- 新增 TMA MiMo 适配器，向 TLM AI 设置页注册 MiMo 聊天与 TTS 站点类型。
+- 新增准星目标女仆亲吻按键，不需要公主抱也能用按键亲吻当前指向的女仆。
+- 早安吻与残血救护语音池页面支持试听。
+- `aiDialogueLanguage` 现在会同时影响早安吻 AI 台词预生成和 TTS 语音生成；默认值 `tlm` 会跟随 Touhou Little Maid 本体语言设置，且生成式语音缓存的待合成文本会跟随 TLM 原生语音合成语言按钮。
+- `/tma morning_kiss` 可查看 AI/TTS 状态与缓存统计；测试语言或提示词时，可使用 `/tma morning_kiss ai on/off`、`/tma morning_kiss tts on/off` 或 `/tma morning_kiss clear_ai_cache`。
+- `examples/TMA-Custom-Voice-Pack` 提供可直接压缩发布的示例数据包。
 
-## 核心玩法与机理
+完整版本历史见 [CHANGELOG.md](CHANGELOG.md)。
+
+## 功能特性
 
 ### 亲吻互动
-- **按键互动**：准星对准女仆按下亲吻键即可触发亲吻；使用鞍公主抱起女仆时，也有专属按键可直接亲吻。
-- **互动反馈**：每次亲吻均有心形粒子、专属音效及特写镜头推进。
-- **好感成长**：亲吻可稳步提升女仆的好感度。好感等级越高，亲吻冷却时间越短。
-- **少女祈祷**：短时间内连续亲吻可以为双方带来「少女祈祷」生命恢复增益。
 
-### 羁绊能力
-当女仆好感度达到 3 级（最高级）时，女仆背包界面顶部将解锁**羁绊页签**。
-玩家消耗背包内的 P 点（PowerPoint）即可逐一激活羁绊能力：
+潜行、空手右击自己的女仆即可亲吻。亲吻会提升好感、播放随机亲吻音效、生成爱心粒子，并触发短暂的贴近镜头。短时间连续亲吻可触发自定义增益「少女祈祷」。
 
-| 羁绊能力 | 功能说明 |
-| :--- | :--- |
-| **休闲膝枕** | 与女仆共同就坐或平躺休憩。支持自由调节相对位置与视角锁定，兼容 YSM 自定义动作。 |
-| **早安吻** | 清晨唤醒或主动问候。女仆会主动上前送上晨安吻，并播放定制台词与配音。 |
-| **残血救护** | 遭遇致命危险时，已羁绊女仆会挺身而出抵御伤害并紧急回血，附带专属救护语音。 |
-| **随机礼物** | 女仆日常会为你收集并赠送贴心小礼物，可在界面中随时查收礼物堆积进度。 |
+安装 CarryOn 时，右键触发条件会自动调整以避免冲突。公主抱女仆时，也可以使用专门的公主抱亲吻按键。
 
-### 早安吻 AI 与双语体系
-早安吻支持复用车万女仆原生配置的 AI 聊天与 TTS 站点，在后台异步预生成个性化问候台词与语音缓存。
-- **跨语种配对**：文本显示语种与语音合成语种彼此独立，支持“中文台词 + 日文配音”等双语搭配。
-- **自动适配**：默认设置为 `auto`，文本自动跟随客户端语言，配音自动跟随女仆在车万女仆中的 AI 音色语种。
-- **统一管理**：直接复用车万女仆已有的 AI 模型与 API 密钥，无需重复配置服务商。
+### 准星亲吻按键
 
-## 使用方法
+按键设置中新增准星目标女仆亲吻入口。客户端只发送目标实体 id；服务端会重新校验归属、距离、视线、冷却和正常亲吻规则，再决定是否执行亲吻。
 
-### 常用按键
-在游戏「选项 → 控制 → 按键绑定」中可自定义以下快捷键：
-- **准星亲吻**：对准归属于自己的女仆进行互动。
-- **抱起亲吻**：使用鞍抱起女仆时的专属亲吻按键。
-- **休闲膝枕**：快捷发起膝枕休息。
-- **锁定视角**：膝枕状态下固定观赏视角。
+### 羁绊系统
 
-### 游戏内设置面板
-在女仆界面的羁绊页右上角，点击「设置」齿轮按钮即可打开独立配置面板：
-- **状态 (Status)**：实时查看当前所有女仆的早安吻 AI 缓存进度、生效开关与统计详情。
-- **功能 (Features)**：开关各项羁绊功能，并调节 AI 台词生成频率与缓存上限。
-- **语音 (Voice)**：自由切换文本与配音语种，在线编辑早安吻 Prompt 提示词模板，并可一键直达车万女仆 AI 站点设置。
-- **音量 (Volume)**：拖动滑块实时调节亲吻音效、早安吻语音、残血救护及试听音量。
+高好感女仆可进入羁绊系统。当前能力包括：
 
-### 管理员命令
-游戏内所有配置均走服务端权威同步，管理员（OP 权限等级 2）可使用 `/tma` 指令进行运维：
-```
-/tma morning_kiss status                       # 查看早安吻全局状态与缓存统计
-/tma morning_kiss clear_ai_cache [all|maid...]  # 清理 AI 问候台词与语音缓存
-/tma rescue on|off|toggle                      # 开启或关闭全服残血救护功能
-/tma bond prune [days]                         # 清理离线超过指定天数的女仆羁绊数据（默认 90 天）
+| 能力 | 作用 |
+|---|---|
+| 休闲膝枕 | 与女仆一起坐下或躺下休息，可配置双方姿态与 YSM 动作。 |
+| 早安吻 | 定时或手动呼叫女仆问候，支持亲吻、台词与语音播放。 |
+| 残血救护 | 让已羁绊女仆贡献每日救援次数，并播放救援语音。 |
+| 随机礼物 | 女仆随时间积累并送出小礼物。 |
+
+解锁、消耗、距离、冷却和能力执行均由服务端判定；客户端羁绊页只负责展示与配置。
+
+### 自定义文本与语音
+
+数据包语音池结构如下：
+
+```text
+data/touhou_maid_affection/morning_kiss/profile.json
+data/touhou_maid_affection/morning_kiss/voices/*.ogg
+data/touhou_maid_affection/emergency_rescue/profile.json
+data/touhou_maid_affection/emergency_rescue/voices/*.ogg
 ```
 
-### 数据包自定义语音
-支持通过数据包（Datapack）拓展早安吻与残血救护的台词池及 `.ogg` 语音包：
-- 数据包根路径：`data/touhou_maid_affection/morning_kiss/` 与 `emergency_rescue/`
-- 示例语音包参考：[examples/TMA-Custom-Voice-Pack](examples/TMA-Custom-Voice-Pack)
-- 详细编写教程：[早安吻相关配置说明.md](早安吻相关配置说明.md)
+早安吻数据包可配置静态台词池、亲吻音效行为和 OGG 语音；残血救护数据包可配置救援 OGG 语音与兜底音效。语音池页面可以在保存前试听当前候选语音。
 
-## 注意事项
+完整教程见 [早安吻文本修改教程.md](早安吻文本修改教程.md)，示例包位于 [examples/TMA-Custom-Voice-Pack](examples/TMA-Custom-Voice-Pack)。
 
-- **服务端权威**：好感度计算、冷却时间、视线判定及羁绊能力均由服务端校验。单人游戏与多人联机体验完全一致。
-- **音量控制**：面板内的音量滑块属于本地客户端衰减设置（`0.0` 为静音，`1.0` 为标准音量）。若需要更大音量，请提高系统或游戏主音量。
-- **权限控制**：在多人服务器中，全局功能开关、语种策略及提示词模板仅限管理员修改，普通玩家打开设置面板为只读状态。
-- **数据保留**：女仆死亡重生、卸载或使用道具收纳时羁绊数据完整保留，如需清理长期废弃数据请使用 `/tma bond prune`。
+### AI 与 MiMo
 
-## 杂项与兼容性
+早安吻可以选择复用 TLM AI 站点，在非触发时段提前生成台词与 TTS 语音缓存。运行时开关、提示词与 `aiDialogueLanguage` 语言配置位于 `config/touhou_maid_affection-common.toml`；`tlm`、`auto` 或 `default` 会跟随 TLM 本体语言设置。仅文本生成跟随女仆聊天语言；生成式语音缓存会让待合成文本跟随 TLM 原生“语音合成”语言按钮，确保送入 TTS 的文本语种和语音语种一致。显式填写 `en_us`、`ja_jp` 等值才会统一覆盖两者。数据包仍只负责静态文本和预录 OGG 文件。`/tma morning_kiss` 可查看当前 AI/TTS 配置，`/tma morning_kiss cache` 会按女仆、时间池、文本语种、语音语种和进行中请求展示生成缓存详情；测试语言或提示词时，管理员可使用 `ai on/off`、`tts on/off` 或 `clear_ai_cache`。生成缓存容量按女仆和时间池执行硬上限；默认每池 4 条、三个时间池合计 12 条，即使明细里出现多种语种也不会额外扩容。默认情况下生成缓存会复用不消耗，从而减少 LLM/TTS token；如果想保留旧的播放后补池行为，可设置 `aiDialogueCacheConsumeOnUse=true`。
 
-### 模组联动
-- **Touhou Little Maid (车万女仆)**：核心前置模组（本分支按 `1.5.3-forge+mc1.20.1` 构建）。
-- **MaidFileManager (女仆档案管理器)**：支持将女仆的羁绊等级、解锁能力与语音偏好随 `.maid` 档案一同无损迁移导出。
-- **Epic Fight (史诗战斗)**：兼容「史诗战斗：车万女仆」联动桥接及 Avalon，羁绊页签会自动避开技能页签。
-- **Yes Steve Model (YSM)**：支持膝枕状态下的自定义动作播放。
-- **Tweakerge / Tweakeroo**：完美兼容自由摄像机视角，膝枕平躺不会引发任何冲突。
+TMA 还会向 TLM AI 设置页注册 MiMo 兼容的聊天与 TTS 站点类型。适配器只提供供应商默认值；用户 API key 和启用状态仍由 Touhou Little Maid 自己保存。
 
-### 运行环境与安装
+### 兼容性
+
+- Touhou Little Maid：必需依赖，本分支按 `1.5.2-forge+mc1.20.1` 构建。
+- Yes Steve Model：可选动作播放与动作列表扫描。
+- CarryOn：可选右键冲突规避。
+- TLM GUI、AI 站点与音包：存在时增强，不存在时静默回退。
+
+## 安装
+
 1. 安装 Minecraft `1.20.1` 与 Forge `47.4.x`。
-2. 安装 Forge 1.20.1 对应的 **Touhou Little Maid**（`1.5.0+`）。
-3. 将 `touhou-maid-affection-1.7.5.1.jar` 放入 `.minecraft/mods` 文件夹。
+2. 安装 Forge 1.20.1 对应的 Touhou Little Maid。
+3. 将 `touhou-maid-affection-1.7.2.2.jar` 放入 `mods` 文件夹。
 4. 启动游戏。
 
-### 开发者文档
-- [PROJECT_ARCHITECTURE.md](PROJECT_ARCHITECTURE.md)：架构设计与模块分层说明。
-- [CHANGELOG.md](CHANGELOG.md)：详细更新日志。
-- [早安吻相关配置说明.md](早安吻相关配置说明.md)：数据包台词、语音与 AI 进阶配置指南。
-- [TESTING.md](TESTING.md)：自动化测试与回归验证规范。
+## 从源码构建
 
-### 开源许可证
-本项目遵循 [MIT 许可证](LICENSE) 开源。
+```bash
+git clone https://github.com/yabo083/Touhou-Maid-Affection.git
+cd Touhou-Maid-Affection
+./gradlew build
+```
+
+构建产物：
+
+```text
+build/libs/touhou-maid-affection-<version>.jar
+```
+
+## 维护文档
+
+- [PROJECT_ARCHITECTURE.md](PROJECT_ARCHITECTURE.md)：核心架构边界与模块职责。
+- [CHANGELOG.md](CHANGELOG.md)：面向用户的版本更新历史。
+- [早安吻文本修改教程.md](早安吻文本修改教程.md)：数据包文本、语音与 AI 配置教程。
+- [TESTING.md](TESTING.md)：测试范围、约定与回归命令。
+- [DEPLOYMENT.md](DEPLOYMENT.md)：构建发布约束与发版前检查清单。
+
+## 许可证
+
+[MIT License](LICENSE)

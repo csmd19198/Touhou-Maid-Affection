@@ -23,7 +23,7 @@ public record VoicePreviewRequestPayload(
             new Type<>(new ResourceLocation(TouhouMaidAffection.MOD_ID, "voice_preview_request"));
 
     public static final StreamCodec<ByteBuf, VoicePreviewRequestPayload> STREAM_CODEC = StreamCodec.composite(
-ByteBufCodecs.UUID, VoicePreviewRequestPayload::maidUuid,
+            ByteBufCodecs.UUID, VoicePreviewRequestPayload::maidUuid,
             FEATURE_CODEC, VoicePreviewRequestPayload::feature,
             VOICE_ID_CODEC, VoicePreviewRequestPayload::voiceId,
             VoicePreviewRequestPayload::new

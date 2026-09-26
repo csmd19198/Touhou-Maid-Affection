@@ -51,7 +51,6 @@ public final class RandomGiftService {
             net.minecraft.core.registries.Registries.ITEM,
             new ResourceLocation(TouhouMaidAffection.MOD_ID, "bond_random_gift_blacklist")
     );
-
     private static final Map<UUID, PendingDeliveryTask> DELIVERY_TASKS = new HashMap<>();
     private static final int SCAN_INTERVAL_TICKS = 20;
 

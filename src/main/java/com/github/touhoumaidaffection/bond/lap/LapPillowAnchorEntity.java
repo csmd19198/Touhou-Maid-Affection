@@ -102,13 +102,13 @@ public class LapPillowAnchorEntity extends Entity {
     @Override
     protected void defineSynchedData() {
         LapPillowPoseSnapshot defaults = LapPillowPoseSnapshot.maidSitPlayerLieDefault();
-        entityData.define(DATA_MODE, defaults.mode().ordinal());
-        entityData.define(DATA_MAID_OFFSET_X, (float) defaults.maidOffsetX());
-        entityData.define(DATA_MAID_OFFSET_Y, (float) defaults.maidOffsetY());
-        entityData.define(DATA_MAID_OFFSET_Z, (float) defaults.maidOffsetZ());
-        entityData.define(DATA_PLAYER_OFFSET_X, (float) defaults.playerOffsetX());
-        entityData.define(DATA_PLAYER_OFFSET_Y, (float) defaults.playerOffsetY());
-        entityData.define(DATA_PLAYER_OFFSET_Z, (float) defaults.playerOffsetZ());
+        this.entityData.define(DATA_MODE, defaults.mode().ordinal());
+        this.entityData.define(DATA_MAID_OFFSET_X, (float) defaults.maidOffsetX());
+        this.entityData.define(DATA_MAID_OFFSET_Y, (float) defaults.maidOffsetY());
+        this.entityData.define(DATA_MAID_OFFSET_Z, (float) defaults.maidOffsetZ());
+        this.entityData.define(DATA_PLAYER_OFFSET_X, (float) defaults.playerOffsetX());
+        this.entityData.define(DATA_PLAYER_OFFSET_Y, (float) defaults.playerOffsetY());
+        this.entityData.define(DATA_PLAYER_OFFSET_Z, (float) defaults.playerOffsetZ());
     }
 
     @Override
@@ -213,10 +213,6 @@ public class LapPillowAnchorEntity extends Entity {
         return !poseSnapshot.playerLying();
     }
 
-    protected Vec3 getPassengerAttachmentPoint(Entity passenger, EntityDimensions dimensions, float partialTick) {
-        return new Vec3(0.0D, 0.0D, 0.0D);
-    }
-
     @Override
     protected void positionRider(Entity passenger, MoveFunction moveFunction) {
         Vec3 riderPos = getPlayerWorldPosition();
@@ -233,10 +229,6 @@ public class LapPillowAnchorEntity extends Entity {
 
     @Override
     public boolean shouldBeSaved() {
-        return false;
-    }
-
-    public boolean canUsePortal(boolean allowPassengers) {
         return false;
     }
 

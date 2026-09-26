@@ -1,6 +1,5 @@
 package com.github.touhoumaidaffection.bond.service;
 
-import com.github.touhoumaidaffection.TouhouMaidAffection;
 import com.github.tartaricacid.touhoulittlemaid.entity.passive.EntityMaid;
 import com.github.touhoumaidaffection.ModConfig;
 import com.github.touhoumaidaffection.bond.BondManager;
@@ -21,7 +20,6 @@ import net.minecraft.world.level.Level;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.network.PacketDistributor;
 
 import java.util.Comparator;
 import java.util.HashMap;

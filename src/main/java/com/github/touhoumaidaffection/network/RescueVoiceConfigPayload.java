@@ -2,7 +2,6 @@ package com.github.touhoumaidaffection.network;
 
 import com.github.touhoumaidaffection.TouhouMaidAffection;
 import io.netty.buffer.ByteBuf;
-
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -44,7 +43,7 @@ public record RescueVoiceConfigPayload(
     }
 
     private static void encode(ByteBuf buf, RescueVoiceConfigPayload payload) {
-ByteBufCodecs.UUID.encode(buf, payload.maidUuid());
+        ByteBufCodecs.UUID.encode(buf, payload.maidUuid());
         CONFIG_STRING_CODEC.encode(buf, payload.sourceMode());
         CONFIG_STRING_CODEC.encode(buf, payload.tlmPlayMode());
         CONFIG_STRING_CODEC.encode(buf, payload.tlmSelectedGroup());
@@ -57,7 +56,7 @@ ByteBufCodecs.UUID.encode(buf, payload.maidUuid());
 
     private static RescueVoiceConfigPayload decode(ByteBuf buf) {
         return new RescueVoiceConfigPayload(
-ByteBufCodecs.UUID.decode(buf),
+                ByteBufCodecs.UUID.decode(buf),
                 CONFIG_STRING_CODEC.decode(buf),
                 CONFIG_STRING_CODEC.decode(buf),
                 CONFIG_STRING_CODEC.decode(buf),

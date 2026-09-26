@@ -18,7 +18,7 @@ import java.util.List;
  */
 public record TmaSettingsRequestPayload(List<TmaSettingsWire.Entry> entries) implements CustomPacketPayload {
     public static final Type<TmaSettingsRequestPayload> TYPE =
-            new Type<>(ResourceLocation.fromNamespaceAndPath(TouhouMaidAffection.MOD_ID, "tma_settings_request"));
+            new Type<>(new ResourceLocation(TouhouMaidAffection.MOD_ID, "tma_settings_request"));
 
     public static final StreamCodec<ByteBuf, TmaSettingsRequestPayload> STREAM_CODEC = StreamCodec.of(
             TmaSettingsRequestPayload::encode,

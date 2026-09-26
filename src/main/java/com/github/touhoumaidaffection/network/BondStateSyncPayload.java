@@ -3,7 +3,6 @@ package com.github.touhoumaidaffection.network;
 import com.github.touhoumaidaffection.TouhouMaidAffection;
 import com.github.touhoumaidaffection.bond.lap.LapPillowMode;
 import io.netty.buffer.ByteBuf;
-
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;

@@ -35,7 +35,7 @@ public final class TmaSettingsResolver {
         if (configValue == null || normalizedValue == null) {
             return;
         }
-TmaSettingsKeys.Type type = TmaSettingsKeys.typeOf(key);
+        TmaSettingsKeys.Type type = TmaSettingsKeys.typeOf(key);
         if (type == TmaSettingsKeys.Type.BOOLEAN) {
             ((ForgeConfigSpec.ConfigValue<Boolean>) configValue).set(Boolean.parseBoolean(normalizedValue));
         } else if (type == TmaSettingsKeys.Type.TEXT) {

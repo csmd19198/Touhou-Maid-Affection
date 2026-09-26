@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RandomGiftResourceLayoutTest {
     @Test
-    void usesTheForge1201PluralItemTagDirectory() {
+    void usesTheMinecraft120PluralItemTagDirectory() {
         Path dataRoot = Path.of("src", "main", "resources", "data", "touhou_maid_affection", "tags");
 
         assertTrue(Files.exists(dataRoot.resolve("items/bond_random_gift_pool.json")));

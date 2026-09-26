@@ -23,6 +23,7 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.client.event.RenderGuiEvent;
 import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 import static com.github.tartaricacid.touhoulittlemaid.util.EntityCacheUtil.clearMaidDataResidue;
 
@@ -161,9 +162,9 @@ public final class EmergencyRescueOverlayRenderer {
                     .rotateX(activeOverlay.hasCustomAction() ? 0.0f : -10.0f * Mth.DEG_TO_RAD);
             InventoryScreen.renderEntityInInventory(
                     gui,
-                    Math.round(translatedCenterX),
-                    Math.round(translatedCenterY + scale * 0.95f),
-                    scale,
+                    (int) translatedCenterX,
+                    (int) (translatedCenterY + scale * 0.95f),
+                    (int) scale,
                     bodyRotation,
                     cameraRotation,
                     activeOverlay.maid()

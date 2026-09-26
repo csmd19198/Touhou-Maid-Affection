@@ -16,7 +16,7 @@ import net.minecraft.resources.ResourceLocation;
  */
 public record TmaAiCacheClearPayload(TmaAiStatusWire.ClearRequest request) implements CustomPacketPayload {
     public static final Type<TmaAiCacheClearPayload> TYPE =
-            new Type<>(ResourceLocation.fromNamespaceAndPath(TouhouMaidAffection.MOD_ID, "tma_ai_cache_clear"));
+            new Type<>(new ResourceLocation(TouhouMaidAffection.MOD_ID, "tma_ai_cache_clear"));
 
     public static final StreamCodec<ByteBuf, TmaAiCacheClearPayload> STREAM_CODEC = StreamCodec.of(
             TmaAiCacheClearPayload::encode,

@@ -20,12 +20,16 @@ public abstract class AbstractMaidContainerGuiMixin {
     @Shadow
     protected EntityMaid maid;
 
-    @Inject(method = "renderMaidInfo", at = @At("HEAD"))
+    // Touhou Little Maid is a mod, not an obfuscated Minecraft class: its member names are stable in
+    // every environment, so these injections must not be remapped. Without remap = false the mixin
+    // annotation processor fails the build with "unable to locate obfuscation mapping" because it
+    // has no mapping to look the mod's members up in.
+    @Inject(method = "renderMaidInfo", at = @At("HEAD"), remap = false)
     private void touhou_maid_affection$captureResolvedName(CallbackInfo ci) {
         TOUHOU_MAID_AFFECTION$DISPLAY_NAME.set(MaidDisplayNameResolver.resolvePlainDisplayName(this.maid));
     }
 
-    @Inject(method = "renderMaidInfo", at = @At("RETURN"))
+    @Inject(method = "renderMaidInfo", at = @At("RETURN"), remap = false)
     private void touhou_maid_affection$clearResolvedName(CallbackInfo ci) {
         TOUHOU_MAID_AFFECTION$DISPLAY_NAME.remove();
     }
@@ -35,7 +39,8 @@ public abstract class AbstractMaidContainerGuiMixin {
             at = @At(
                     value = "INVOKE",
                     target = "Lcom/github/tartaricacid/touhoulittlemaid/client/resource/pojo/MaidModelInfo;getName()Ljava/lang/String;"
-            )
+            ),
+            remap = false
     )
     private static String touhou_maid_affection$replaceModelName(MaidModelInfo instance) {
         String resolved = TOUHOU_MAID_AFFECTION$DISPLAY_NAME.get();

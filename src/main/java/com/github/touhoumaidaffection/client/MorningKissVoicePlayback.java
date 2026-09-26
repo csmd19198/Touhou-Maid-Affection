@@ -18,7 +18,7 @@ import java.util.List;
 
 public final class MorningKissVoicePlayback {
     private static final SoundEvent STREAM_ANCHOR_SOUND_EVENT =
-            SoundEvent.createVariableRangeEvent(new ResourceLocation("minecraft", "music.menu"));
+            SoundEvent.createVariableRangeEvent(ResourceLocation.withDefaultNamespace("music.menu"));
 
     private MorningKissVoicePlayback() {
     }
@@ -42,17 +42,18 @@ public final class MorningKissVoicePlayback {
             return;
         }
 
-float volume = SoundVolumeSettings.resolveVolume(ModConfig.BOND_MORNING_KISS_VOICE_VOLUME.get());
+        SoundEvent soundEvent = SoundEvent.createVariableRangeEvent(entry.soundEventId());
+        float volume = SoundVolumeSettings.resolveVolume(ModConfig.BOND_MORNING_KISS_VOICE_VOLUME.get());
         Entity entity = minecraft.level.getEntity(payload.maidEntityId());
         if (entity instanceof EntityMaid maid) {
-            minecraft.getSoundManager().play(new MorningKissVoiceSoundInstance(STREAM_ANCHOR_SOUND_EVENT, voiceData.data(), voiceData.fileName(), maid, maid.getX(), maid.getY(), maid.getZ(), volume, 1.0F));
+            minecraft.getSoundManager().play(new MorningKissVoiceSoundInstance(soundEvent, voiceData.data(), voiceData.fileName(), maid, maid.getX(), maid.getY(), maid.getZ(), volume, 1.0F));
             return;
         }
 
         double x = minecraft.player.getX();
         double y = minecraft.player.getY();
         double z = minecraft.player.getZ();
-minecraft.getSoundManager().play(new MorningKissVoiceSoundInstance(STREAM_ANCHOR_SOUND_EVENT, voiceData.data(), voiceData.fileName(), null, x, y, z, volume, 1.0F));
+        minecraft.getSoundManager().play(new MorningKissVoiceSoundInstance(soundEvent, voiceData.data(), voiceData.fileName(), null, x, y, z, volume, 1.0F));
     }
 
     public static void playDataPackVoice(MorningKissDataVoicePlayPayload payload) {

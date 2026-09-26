@@ -23,9 +23,10 @@ public interface StreamCodec<B, T> {
         };
     }
 
-    static <B, T> StreamCodec<B, T> unit(T unit) {
-        return of((buffer, value) -> {
-        }, buffer -> unit);
+    /** 1.21 helper for a payload with no fields: writes nothing and always decodes the same value. */
+    static <B, T> StreamCodec<B, T> unit(T value) {
+        return of((buffer, ignored) -> {
+        }, buffer -> value);
     }
 
     static <B, T1, R> StreamCodec<B, R> composite(

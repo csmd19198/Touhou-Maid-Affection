@@ -13,20 +13,18 @@ import java.util.concurrent.CompletableFuture;
 
 public final class VoicePreviewDataPackSoundInstance extends TrackedEntityVoiceSoundInstance {
     private static final SoundEvent STREAM_ANCHOR_SOUND_EVENT =
-            SoundEvent.createVariableRangeEvent(new ResourceLocation("minecraft", "music.menu"));
+            SoundEvent.createVariableRangeEvent(ResourceLocation.withDefaultNamespace("music.menu"));
 
-    private final String feature;
     private final byte[] data;
     private final OggReader.Type oggType;
     private final boolean mp3;
     private final String fileName;
 
-    public VoicePreviewDataPackSoundInstance(String feature, byte[] data, OggReader.Type oggType,
-                                             boolean mp3, String fileName, Entity trackedEntity,
+    public VoicePreviewDataPackSoundInstance(byte[] data, OggReader.Type oggType, boolean mp3,
+                                             String fileName, Entity trackedEntity,
                                              double x, double y, double z,
                                              float volume, float pitch) {
         super(STREAM_ANCHOR_SOUND_EVENT, SoundSource.PLAYERS, trackedEntity, x, y, z, volume, pitch);
-        this.feature = feature;
         this.data = data;
         this.oggType = oggType;
         this.mp3 = mp3;

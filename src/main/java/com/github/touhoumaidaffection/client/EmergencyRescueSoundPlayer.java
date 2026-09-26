@@ -16,7 +16,7 @@ import java.util.List;
 
 public final class EmergencyRescueSoundPlayer {
     private static final SoundEvent STREAM_ANCHOR_SOUND_EVENT =
-            SoundEvent.createVariableRangeEvent(new ResourceLocation("minecraft", "music.menu"));
+            SoundEvent.createVariableRangeEvent(ResourceLocation.withDefaultNamespace("music.menu"));
 
     private EmergencyRescueSoundPlayer() {
     }
@@ -141,7 +141,7 @@ public final class EmergencyRescueSoundPlayer {
         }
         try {
             minecraft.getSoundManager().play(new EmergencyRescueTlmSoundInstance(
-                    STREAM_ANCHOR_SOUND_EVENT,
+                    SoundEvent.createVariableRangeEvent(entry.soundEventId()),
                     voiceData.data(),
                     voiceData.fileName(),
                     minecraft.player.getX(),
@@ -165,7 +165,7 @@ public final class EmergencyRescueSoundPlayer {
                 return parsed;
             }
         }
-        return new ResourceLocation("minecraft", "entity.player.levelup");
+        return ResourceLocation.withDefaultNamespace("entity.player.levelup");
     }
 
     private static float rescueVolume() {

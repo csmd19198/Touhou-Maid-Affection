@@ -15,8 +15,8 @@ import com.github.touhoumaidaffection.handler.MorningKissVoiceConfigHandler;
 import com.github.touhoumaidaffection.handler.RescueActionConfigHandler;
 import com.github.touhoumaidaffection.handler.RescueVoiceConfigHandler;
 import com.github.touhoumaidaffection.handler.TmaAiStatusRequestHandler;
-import com.github.touhoumaidaffection.handler.VoicePreviewRequestHandler;
 import com.github.touhoumaidaffection.handler.TmaSettingsRequestHandler;
+import com.github.touhoumaidaffection.handler.VoicePreviewRequestHandler;
 import com.github.touhoumaidaffection.network.BondActivateAbilityPayload;
 import com.github.touhoumaidaffection.network.BondStateRequestPayload;
 import com.github.touhoumaidaffection.network.BondStateSyncPayload;
@@ -48,6 +48,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
@@ -60,12 +61,21 @@ import org.slf4j.LoggerFactory;
 
 import java.util.function.BiConsumer;
 
+/**
+ * 1.20.1 Forge entry point.
+ *
+ * <p>The 1.21.1 build registers payloads through NeoForge's {@code PayloadRegistrar}; Forge has no
+ * such API, so every payload is registered on a single {@link SimpleChannel} here. The payload
+ * classes themselves stay 1.21-shaped (they implement the local {@code CustomPacketPayload} shim)
+ * and are adapted through {@link ForgePayloadContext}, which keeps the handler code identical
+ * across both versions.
+ */
 @Mod(TouhouMaidAffection.MOD_ID)
 public class TouhouMaidAffection {
     public static final String MOD_ID = "touhou_maid_affection";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
-    private static final String PROTOCOL_VERSION = "1.7.2-forge";
+    private static final String PROTOCOL_VERSION = "1.7.5-forge";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(MOD_ID, "main"),
@@ -91,7 +101,7 @@ public class TouhouMaidAffection {
 
         // Soft dependency: MaidFileManager migration SPI. The guard keeps the provider class
         // (which implements the SPI) from being resolved when the manager is absent.
-        if (net.minecraftforge.fml.ModList.get().isLoaded("maid_file_manager")) {
+        if (ModList.get().isLoaded("maid_file_manager")) {
             com.github.touhoumaidaffection.compat.maidfm.BondMaidMigrationProvider.register();
         }
 

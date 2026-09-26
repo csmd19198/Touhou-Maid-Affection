@@ -3,6 +3,7 @@
   "package": "com.github.touhoumaidaffection.mixin",
   "compatibilityLevel": "JAVA_17",
   "minVersion": "0.8",
+  "refmap": "touhou_maid_affection.refmap.json",
   "mixins": [
     "MaidBegTaskMixin",
     "MaidRideBegTaskMixin",
@@ -19,7 +20,8 @@
     "client.LivingEntityLapPillowSleepMixin",
     "client.EntityLapPillowPoseClientGuardMixin",
     "client.PlayerLapPillowForcedPoseClientGuardMixin",
-    "client.PlayerModelLapPillowSleepPoseMixin"
+    "client.PlayerModelLapPillowSleepPoseMixin",
+    "client.LLMSiteEditorScreenMixin"
   ],
   "injectors": {
     "defaultRequire": 1

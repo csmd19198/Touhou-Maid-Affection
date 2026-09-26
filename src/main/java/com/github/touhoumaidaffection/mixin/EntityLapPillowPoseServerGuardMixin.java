@@ -11,8 +11,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Entity.class)
 public abstract class EntityLapPillowPoseServerGuardMixin {
-    @Inject(method = "m_20124_", at = @At("HEAD"), cancellable = true, remap = false, require = 0)
+    @Inject(method = "setForcedPose", at = @At("HEAD"), cancellable = true, require = 0)
+    private void touhou_maid_affection$guardServerForcedPose(Pose pose, CallbackInfo ci) {
+        guardServerPoseWrite(pose, ci);
+    }
+
+    @Inject(method = "setPose", at = @At("HEAD"), cancellable = true, require = 0)
     private void touhou_maid_affection$guardServerPose(Pose pose, CallbackInfo ci) {
+        guardServerPoseWrite(pose, ci);
+    }
+
+    private void guardServerPoseWrite(Pose pose, CallbackInfo ci) {
         if (pose == Pose.SLEEPING || !((Object) this instanceof ServerPlayer serverPlayer)) {
             return;
         }

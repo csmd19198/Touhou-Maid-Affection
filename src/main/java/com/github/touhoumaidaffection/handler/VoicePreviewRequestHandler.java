@@ -49,16 +49,13 @@ public final class VoicePreviewRequestHandler {
                 return;
             }
             InteractionVoiceProfileData.DataPackVoice dataPackVoice = voice.get();
-            TouhouMaidAffection.CHANNEL.send(
-                    PacketDistributor.PLAYER.with(() -> player),
-                    new VoicePreviewDataPackPlayPayload(
-                            maid.getId(),
-                            maid.getUUID(),
-                            payload.feature(),
-                            dataPackVoice.fileName(),
-                            dataPackVoice.data()
-                    )
-            );
+            TouhouMaidAffection.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new VoicePreviewDataPackPlayPayload(
+                    maid.getId(),
+                    maid.getUUID(),
+                    payload.feature(),
+                    dataPackVoice.fileName(),
+                    dataPackVoice.data()
+            ));
         });
     }
 
@@ -67,7 +64,8 @@ public final class VoicePreviewRequestHandler {
         RATE_LIMITER.remove(event.getEntity().getUUID());
     }
 
-    private static Optional<InteractionVoiceProfileData.DataPackVoice> resolveVoice(ServerPlayer player, EntityMaid maid, VoicePreviewRequestPayload payload) {
+    private static Optional<InteractionVoiceProfileData.DataPackVoice> resolveVoice(ServerPlayer player, EntityMaid maid,
+                                                                                   VoicePreviewRequestPayload payload) {
         String fileName = VoicePoolIds.value(payload.voiceId());
         if (VoicePreviewRequestPayload.FEATURE_MORNING_KISS.equals(payload.feature())) {
             if (!BondManager.isAbilityUnlocked(player, maid.getUUID(), "morning_kiss")) {

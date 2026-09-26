@@ -2,12 +2,12 @@ package com.github.touhoumaidaffection.bond.rescue;
 
 import com.github.touhoumaidaffection.TouhouMaidAffection;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.living.LivingHurtEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
+import net.minecraftforge.event.entity.living.LivingDamageEvent;
+import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 
 @EventBusSubscriber(modid = TouhouMaidAffection.MOD_ID)
 public final class EmergencyHealListener {
@@ -15,7 +15,7 @@ public final class EmergencyHealListener {
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
-    public static void onLivingHurt(LivingHurtEvent event) {
+    public static void onLivingDamagePre(LivingDamageEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player) || player.level().isClientSide) {
             return;
         }
@@ -25,7 +25,7 @@ public final class EmergencyHealListener {
         if (!EmergencyRescueService.shouldAttemptByDamage(player, event.getAmount())) {
             return;
         }
-        if (EmergencyRescueService.tryConsumeAndRescue(player, "living_hurt")) {
+        if (EmergencyRescueService.tryConsumeAndRescue(player, "damage_pre")) {
             event.setAmount(0.0F);
         }
     }
@@ -60,3 +60,4 @@ public final class EmergencyHealListener {
         return EmergencyRescueService.getCurrentRescueDay(player);
     }
 }
+

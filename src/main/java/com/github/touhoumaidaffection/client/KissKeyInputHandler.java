@@ -5,12 +5,13 @@ import com.github.touhoumaidaffection.TouhouMaidAffection;
 import com.github.touhoumaidaffection.network.KissCarryRequestPayload;
 import com.github.touhoumaidaffection.network.KissTargetedMaidRequestPayload;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.phys.EntityHitResult;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.network.PacketDistributor;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.EntityHitResult;
 
 @EventBusSubscriber(modid = TouhouMaidAffection.MOD_ID, value = Dist.CLIENT)
 public class KissKeyInputHandler {

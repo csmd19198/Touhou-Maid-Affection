@@ -1,3 +1,19 @@
+buildscript {
+    // MixinGradle is applied through its classpath artifact rather than the plugins{} DSL: the
+    // plugin marker is not in the offline Gradle cache, the artifact itself (0.7.38) is.
+    repositories {
+        maven {
+            name = 'LocalForgeCache'
+            url = 'file:///E:/deepseek/forge-local'
+        }
+        mavenCentral()
+        maven { url = 'https://maven.minecraftforge.net/' }
+    }
+    dependencies {
+        classpath 'org.spongepowered:mixingradle:0.7.38'
+    }
+}
+
 plugins {
     id 'eclipse'
     id 'idea'
@@ -5,6 +21,8 @@ plugins {
     id 'net.minecraftforge.gradle' version '[6.0,6.2)'
     id 'com.modrinth.minotaur' version '2.+'
 }
+
+apply plugin: 'org.spongepowered.mixin'
 
 version = mod_version
 group = mod_group_id
@@ -14,6 +32,14 @@ base {
 }
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+
+// Writes touhou_maid_affection.refmap.json next to the classes and points the shipped mixin config
+// at it. Without this the @Inject targets stay in their development names (isPassenger) and every
+// mixin fails to apply against the SRG runtime - which is exactly how the first 1.20.1 build died.
+mixin {
+    add sourceSets.main, 'touhou_maid_affection.refmap.json'
+    config 'touhou_maid_affection.mixins.json'
+}
 
 minecraft {
     mappings channel: mapping_channel, version: mapping_version
@@ -46,6 +72,10 @@ minecraft {
 repositories {
     mavenLocal()
     maven {
+        name = 'LocalForgeCache'
+        url = 'file:///E:/deepseek/forge-local'
+    }
+    maven {
         name = 'Modrinth'
         url = 'https://api.modrinth.com/maven'
         content {
@@ -59,8 +89,9 @@ dependencies {
 
     // Touhou Little Maid - compile only, not bundled
     compileOnly fg.deobf("maven.modrinth:touhou-little-maid:${tlm_version}")
-    // 开发运行（runClient/runServer）需要 TLM 在运行时类路径上；不会进入发布 jar
-    runtimeOnly fg.deobf("maven.modrinth:touhou-little-maid:${tlm_version}")
+
+    // Generates the mixin refmap (see the mixin { } block above).
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 
     testImplementation platform('org.junit:junit-bom:5.10.2')
     testImplementation 'org.junit.jupiter:junit-jupiter'
@@ -88,12 +119,7 @@ tasks.named('processResources', ProcessResources).configure {
     }
 }
 
-// MaidFileManager SPI 是编译期 shim：运行期由 maid_file_manager 的 jar 提供实现，
-// 绝不能让本 mod 的 jar 也带一份同名类（NeoForge 的 module classloader 不做跨 mod 去重）。
-// 这里排除整个 io.github.zgxhzhr 命名空间，连空的目录条目也不留在产物里。
 tasks.named('jar', Jar).configure {
-    exclude 'io/github/zgxhzhr/**'
-
     manifest {
         attributes([
                 'Specification-Title'     : mod_id,
@@ -114,10 +140,6 @@ tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
 }
 
-// 让测试可见主源集的类路径（含 Minecraft 类），以便对 NBT 适配层写真实断言
-sourceSets.test.compileClasspath += sourceSets.main.compileClasspath
-sourceSets.test.runtimeClasspath += sourceSets.main.runtimeClasspath
-
 tasks.named('test', Test).configure {
     useJUnitPlatform()
 }
@@ -135,7 +157,7 @@ modrinth {
     uploadFile = jar
     gameVersions = [project.minecraft_version]
     loaders = ['forge']
-    changelog = System.getenv('CHANGELOG') ?: "See https://github.com/yabo083/Touhou-Maid-Affection/releases/tag/v${project.mod_version}-forge1.20.1"
+    changelog = System.getenv('CHANGELOG') ?: "See https://github.com/yabo083/maid-affection/releases/tag/v${project.mod_version}-forge1.20.1"
     syncBodyFrom = rootProject.file('README.md').text
     dependencies {
         required.project 'touhou-little-maid'

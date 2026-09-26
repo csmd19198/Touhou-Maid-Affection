@@ -5,6 +5,7 @@ import com.github.touhoumaidaffection.bond.settings.TmaAiStatusWire;
 import com.github.touhoumaidaffection.network.TmaAiCacheClearPayload;
 import com.github.touhoumaidaffection.network.TmaAiStatusPayload;
 import com.github.touhoumaidaffection.network.TmaAiStatusRequestPayload;
+import net.minecraftforge.network.PacketDistributor;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;

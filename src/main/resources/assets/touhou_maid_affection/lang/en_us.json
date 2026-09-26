@@ -8,7 +8,8 @@
   "key.touhou_maid_affection.kiss_targeted_maid": "Kiss Targeted Maid",
   "key.touhou_maid_affection.lap_pillow": "Lap Pillow",
   "key.touhou_maid_affection.lap_pillow_angle_lock": "Lap Pillow Angle Lock",
-"bond.voice_preview.throttled": "Slow down, please wait before previewing again",
+  "key.touhou_maid_affection.voice_preview": "Preview Voice",
+  "bond.voice_preview.throttled": "Slow down, please wait before previewing again",
   "bond.title": "Bond System",
   "bond.tab.title": "Bond Abilities",
   "bond.tab.desc": "Unlock deeper interactions as your bond with the maid grows.",
@@ -168,12 +169,11 @@
   "bond.voice_pool.source.tlm": "TLM",
   "bond.voice_pool.builtin_morning_kiss": "Built-in Morning Kiss Sound",
   "bond.voice_pool.builtin_morning_kiss.desc": "Use the mod's built-in kiss sound as a selectable item",
-  "bond.voice_pool.preview.failed": "This voice cannot be previewed right now",
   "bond.voice_pool.mode.random": "Random",
   "bond.voice_pool.mode.sequential": "Sequential",
   "bond.voice_pool.select_all": "All",
   "bond.voice_pool.select_none": "None",
-  "key.touhou_maid_affection.voice_preview": "Preview Voice",
+  "bond.voice_pool.preview.failed": "This voice cannot be previewed right now",
   "bond.morning_kiss.dialogue.morning.1": "%s rises on her toes: Good morning, Master. Let me steal the first kiss of the day and stay by your side.",
   "bond.morning_kiss.dialogue.morning.2": "%s whispers near your ear: I want to quietly give the first piece of today's affection to you, Master.",
   "bond.morning_kiss.dialogue.morning.3": "%s blushes softly: Your presence is so comforting... let me come a little closer.",
@@ -257,7 +257,7 @@
   "command.touhou_maid_affection.morning_kiss.cache.entries": "Entries: %s total, %s with voice, %s text-only",
   "command.touhou_maid_affection.morning_kiss.cache.runtime": "Runtime: %s maids cached, %s requests in flight, revision %s",
   "command.touhou_maid_affection.morning_kiss.cache.maid": " - %s (%s): %s entries, %s with voice, %s text-only",
-  "command.touhou_maid_affection.morning_kiss.cache.pool": "   · %s: text=%s, voice=%s, %s entries, %s with voice, %s text-only",
+  "command.touhou_maid_affection.morning_kiss.cache.pool": "   . %s: text=%s, voice=%s, %s entries, %s with voice, %s text-only",
   "command.touhou_maid_affection.morning_kiss.cache.in_flight": " - In flight: %s (%s), pool=%s, phase=%s, text=%s, voice=%s, pending voices=%s",
   "command.touhou_maid_affection.rescue.sound.sync": "Triggered predefined rescue voice rescan and sync.",
   "command.touhou_maid_affection.rescue.sound.reload": "Requested client-side rescue voice config reload.",
@@ -308,5 +308,7 @@
   "effect.touhou_maid_affection.eternal_utopia.desc": "Restores health and saturation, clears harmful effects, prevents phantoms, and makes hostile mobs lose interest."
 ,
   "bond.emergency_rescue.action.none_detected": "No actions detected",
-  "bond.emergency_rescue.action.none_detected.tip": "This model does not expose any selectable YSM extra animations."
+  "bond.emergency_rescue.action.none_detected.tip": "This model does not expose any selectable YSM extra animations.",
+  "ai.touhou_little_maid.chat.site.tma_mimo_chat.name": "TMA MiMo Chat",
+  "ai.touhou_little_maid.chat.site.tma_mimo_tts.name": "TMA MiMo TTS"
 }

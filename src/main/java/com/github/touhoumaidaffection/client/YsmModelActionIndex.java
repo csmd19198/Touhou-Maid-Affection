@@ -173,10 +173,10 @@ public final class YsmModelActionIndex {
         String modelRoot = descriptorLocation.getPath().substring(0, descriptorLocation.getPath().length() - "/ysm.json".length());
         String animationPrefix = modelRoot + "/animations/";
         Set<String> seen = new HashSet<>(actions.keySet());
-        for (ResourceLocation location : listResourceLocationsSafely(resourceManager, animationPrefix, candidate ->
+        for (ResourceLocation location : listResourcesSafely(resourceManager, "", candidate ->
                 candidate.getNamespace().equals(descriptorLocation.getNamespace())
                         && candidate.getPath().startsWith(animationPrefix)
-                        && candidate.getPath().endsWith(".animation.json"))) {
+                        && candidate.getPath().endsWith(".animation.json")).keySet()) {
             JsonObject animationJson = readJson(resourceManager, location);
             if (animationJson == null || !animationJson.has("animations") || !animationJson.get("animations").isJsonObject()) {
                 continue;
@@ -384,7 +384,7 @@ public final class YsmModelActionIndex {
     private static ResourceLocation findDescriptor(ResourceManager resourceManager, List<String> lookupRoots) {
         ResourceLocation best = null;
         int bestScore = Integer.MAX_VALUE;
-        for (ResourceLocation candidate : listResourceLocationsSafely(resourceManager, "", location -> location.getPath().endsWith("/ysm.json"))) {
+        for (ResourceLocation candidate : listResourcesSafely(resourceManager, "", location -> location.getPath().endsWith("/ysm.json")).keySet()) {
             String rootPath = candidate.getPath().substring(0, candidate.getPath().length() - "/ysm.json".length());
             int score = matchScore(lookupRoots, rootPath);
             if (score >= 0 && score < bestScore) {
@@ -395,16 +395,25 @@ public final class YsmModelActionIndex {
         return best;
     }
 
-    static List<ResourceLocation> listResourceLocationsSafely(ResourceManager resourceManager,
-                                                              String pathPrefix,
-                                                              Predicate<ResourceLocation> filter) {
+    private static Map<ResourceLocation, Resource> listResourcesSafely(ResourceManager resourceManager,
+                                                                       String pathPrefix,
+                                                                       Predicate<ResourceLocation> filter) {
         try {
-            return new ArrayList<>(resourceManager.listResources(pathPrefix, filter).keySet());
-        } catch (Throwable ignored) {
-            return List.of();
+            return resourceManager.listResources(pathPrefix, filter);
+        } catch (RuntimeException ignored) {
+            return Map.of();
         }
     }
 
+    /**
+     * Same guarded listing as {@link #listResourcesSafely}, exposed as an id list: the 1.20.1 port
+     * ships a unit test for the ModernFix regression guard that drives this seam directly.
+     */
+    static List<ResourceLocation> listResourceLocationsSafely(ResourceManager resourceManager,
+                                                              String pathPrefix,
+                                                              Predicate<ResourceLocation> filter) {
+        return new ArrayList<>(listResourcesSafely(resourceManager, pathPrefix, filter).keySet());
+    }
     private static int matchScore(List<String> lookupRoots, String rootPath) {
         int best = Integer.MAX_VALUE;
         for (String lookupRoot : lookupRoots) {

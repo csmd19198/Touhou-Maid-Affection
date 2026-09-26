@@ -18,7 +18,7 @@ import java.util.List;
  */
 public record TmaSettingsStatePayload(List<TmaSettingsWire.Entry> entries, boolean canEdit) implements CustomPacketPayload {
     public static final Type<TmaSettingsStatePayload> TYPE =
-            new Type<>(ResourceLocation.fromNamespaceAndPath(TouhouMaidAffection.MOD_ID, "tma_settings_state"));
+            new Type<>(new ResourceLocation(TouhouMaidAffection.MOD_ID, "tma_settings_state"));
 
     public static final StreamCodec<ByteBuf, TmaSettingsStatePayload> STREAM_CODEC = StreamCodec.of(
             TmaSettingsStatePayload::encode,

@@ -11,13 +11,9 @@ import com.github.touhoumaidaffection.network.VoicePreviewRequestPayload;
 import com.github.touhoumaidaffection.util.SoundVolumeSettings;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.sounds.SoundEvent;
+import net.minecraftforge.network.PacketDistributor;
 
 public final class VoicePreviewPlayback {
-    private static final SoundEvent STREAM_ANCHOR_SOUND_EVENT =
-            SoundEvent.createVariableRangeEvent(new ResourceLocation("minecraft", "music.menu"));
-
     private VoicePreviewPlayback() {
     }
 
@@ -27,11 +23,12 @@ public final class VoicePreviewPlayback {
             return false;
         }
         if (VoicePoolIds.BUILTIN_MORNING_KISS.equals(voiceId)) {
-TouhouMaidAffection.LOGGER.info("Morning kiss preview playing built-in kiss sound");
+            TouhouMaidAffection.LOGGER.info("Morning kiss preview playing built-in kiss sound");
             minecraft.player.playSound(ModSounds.KISS.get(), SoundVolumeSettings.resolveVolume(ModConfig.KISS_SOUND_VOLUME.get()), 1.0F);
             return true;
         }
         if (VoicePoolIds.isDataPack(voiceId)) {
+            TouhouMaidAffection.LOGGER.info("Morning kiss preview requesting data-pack voice '{}'", voiceId);
             TouhouMaidAffection.CHANNEL.sendToServer(new VoicePreviewRequestPayload(
                     maid.getUUID(),
                     VoicePreviewRequestPayload.FEATURE_MORNING_KISS,
@@ -43,23 +40,20 @@ TouhouMaidAffection.LOGGER.info("Morning kiss preview playing built-in kiss soun
             return false;
         }
         String soundPackId = safeSoundPackId(maid);
-        MorningKissVoiceIndex.VoiceEntry entry = MorningKissVoiceIndex.getEntry(soundPackId, VoicePoolIds.value(voiceId));
-        MorningKissVoiceIndex.VoiceData voiceData = MorningKissVoiceIndex.loadVoiceData(soundPackId, VoicePoolIds.value(voiceId));
+        String clipKey = VoicePoolIds.value(voiceId);
+        MorningKissVoiceIndex.VoiceEntry entry = MorningKissVoiceIndex.getEntry(soundPackId, clipKey);
+        MorningKissVoiceIndex.VoiceData voiceData = MorningKissVoiceIndex.loadVoiceData(soundPackId, clipKey);
         if (entry == null || voiceData == null) {
-            TouhouMaidAffection.LOGGER.warn("Morning kiss preview failed: pack={}, voiceId={}, entry={}, data={}",
-                    soundPackId, voiceId, entry != null, voiceData != null);
+            TouhouMaidAffection.LOGGER.warn("Morning kiss preview failed: pack={}, clip={}, entry={}, data={}",
+                    soundPackId, clipKey, entry != null, voiceData != null);
             minecraft.player.displayClientMessage(Component.translatable("bond.voice_pool.preview.failed"), true);
             return false;
         }
-        TouhouMaidAffection.LOGGER.info("Morning kiss preview playing TLM voice '{}' from pack '{}'", voiceId, soundPackId);
-        minecraft.getSoundManager().play(new MorningKissVoiceSoundInstance(
-                STREAM_ANCHOR_SOUND_EVENT,
+        TouhouMaidAffection.LOGGER.info("Morning kiss preview playing TLM voice: pack={}, clip={}, file={}, bytes={}",
+                soundPackId, clipKey, voiceData.fileName(), voiceData.data().length);
+        minecraft.getSoundManager().play(new VoicePreviewTlmSoundInstance(
                 voiceData.data(),
                 voiceData.fileName(),
-maid,
-                maid.getX(),
-                maid.getY(),
-                maid.getZ(),
                 previewVolume(),
                 1.0F
         ));
@@ -72,6 +66,7 @@ maid,
             return false;
         }
         if (VoicePoolIds.isDataPack(voiceId)) {
+            TouhouMaidAffection.LOGGER.info("Emergency rescue preview requesting data-pack voice '{}'", voiceId);
             TouhouMaidAffection.CHANNEL.sendToServer(new VoicePreviewRequestPayload(
                     maid.getUUID(),
                     VoicePreviewRequestPayload.FEATURE_EMERGENCY_RESCUE,
@@ -83,22 +78,20 @@ maid,
             return false;
         }
         String soundPackId = safeSoundPackId(maid);
-        RescueTlmVoiceIndex.VoiceEntry entry = RescueTlmVoiceIndex.getEntry(soundPackId, VoicePoolIds.value(voiceId));
-        RescueTlmVoiceIndex.VoiceData voiceData = RescueTlmVoiceIndex.loadVoiceData(soundPackId, VoicePoolIds.value(voiceId));
+        String clipKey = VoicePoolIds.value(voiceId);
+        RescueTlmVoiceIndex.VoiceEntry entry = RescueTlmVoiceIndex.getEntry(soundPackId, clipKey);
+        RescueTlmVoiceIndex.VoiceData voiceData = RescueTlmVoiceIndex.loadVoiceData(soundPackId, clipKey);
         if (entry == null || voiceData == null) {
-            TouhouMaidAffection.LOGGER.warn("Emergency rescue preview failed: pack={}, voiceId={}, entry={}, data={}",
-                    soundPackId, voiceId, entry != null, voiceData != null);
+            TouhouMaidAffection.LOGGER.warn("Emergency rescue preview failed: pack={}, clip={}, entry={}, data={}",
+                    soundPackId, clipKey, entry != null, voiceData != null);
             minecraft.player.displayClientMessage(Component.translatable("bond.voice_pool.preview.failed"), true);
             return false;
         }
-        TouhouMaidAffection.LOGGER.info("Emergency rescue preview playing TLM voice '{}' from pack '{}'", voiceId, soundPackId);
-        minecraft.getSoundManager().play(new EmergencyRescueTlmSoundInstance(
-                STREAM_ANCHOR_SOUND_EVENT,
+        TouhouMaidAffection.LOGGER.info("Emergency rescue preview playing TLM voice: pack={}, clip={}, file={}, bytes={}",
+                soundPackId, clipKey, voiceData.fileName(), voiceData.data().length);
+        minecraft.getSoundManager().play(new VoicePreviewTlmSoundInstance(
                 voiceData.data(),
                 voiceData.fileName(),
-minecraft.player.getX(),
-                minecraft.player.getY(),
-                minecraft.player.getZ(),
                 previewVolume(),
                 1.0F
         ));
@@ -110,7 +103,9 @@ minecraft.player.getX(),
         if (minecraft.level == null || minecraft.player == null || payload.data().length == 0) {
             return;
         }
-        boolean mp3 = isMp3(payload.data(), payload.fileName());
+        TouhouMaidAffection.LOGGER.info("Preview data-pack voice received: feature={}, file={}, bytes={}",
+                payload.feature(), payload.fileName(), payload.data().length);
+        boolean mp3 = isMp3(payload.data());
         OggReader.Type oggType = mp3 ? null : getOggType(payload.data(), payload.fileName());
         if (oggType == null && !mp3) {
             minecraft.player.displayClientMessage(Component.translatable("bond.voice_pool.preview.failed"), true);
@@ -121,7 +116,6 @@ minecraft.player.getX(),
         double y = entity == null ? minecraft.player.getY() : entity.getY();
         double z = entity == null ? minecraft.player.getZ() : entity.getZ();
         minecraft.getSoundManager().play(new VoicePreviewDataPackSoundInstance(
-                payload.feature(),
                 payload.data(),
                 oggType,
                 mp3,
@@ -151,16 +145,12 @@ minecraft.player.getX(),
         return null;
     }
 
-    private static boolean isMp3(byte[] data, String fileName) {
+    private static boolean isMp3(byte[] data) {
         if (data == null || data.length < 3) {
             return false;
         }
-        boolean magic = (data[0] == 'I' && data[1] == 'D' && data[2] == '3')
+        return (data[0] == 'I' && data[1] == 'D' && data[2] == '3')
                 || ((data[0] & 0xFF) == 0xFF && (data[1] & 0xE0) == 0xE0);
-        if (magic) {
-            TouhouMaidAffection.LOGGER.info("Detected preview MP3 voice '{}'", fileName);
-        }
-        return magic;
     }
 
     private static String safeSoundPackId(EntityMaid maid) {

@@ -1,8 +1,6 @@
 package net.minecraft.network.codec;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.handler.codec.DecoderException;
-import io.netty.handler.codec.EncoderException;
 import net.minecraft.network.FriendlyByteBuf;
 
 import java.util.Collection;
@@ -23,16 +21,7 @@ public final class ByteBufCodecs {
     private ByteBufCodecs() {
     }
 
-    public static <C extends Collection<T>, T> StreamCodec<ByteBuf, C> collection(
-            Supplier<C> supplier,
-            StreamCodec<ByteBuf, T> elementCodec
-    ) {
-        return collection(supplier, elementCodec, Integer.MAX_VALUE);
-    }
-
-    /**
-     * Bounded string codec mirroring NeoForge's {@code ByteBufCodecs.stringUtf8(int)}.
-     */
+    /** 1.21 name for a length-bounded UTF-8 string codec; the unbounded form is {@link #STRING_UTF8}. */
     public static StreamCodec<ByteBuf, String> stringUtf8(int maxLength) {
         return StreamCodec.of(
                 (buf, value) -> asFriendly(buf).writeUtf(value == null ? "" : value, maxLength),
@@ -40,10 +29,7 @@ public final class ByteBufCodecs {
         );
     }
 
-    /**
-     * Bounded collection codec mirroring NeoForge's
-     * {@code ByteBufCodecs.collection(Supplier, StreamCodec, int)}.
-     */
+    /** 1.21 overload that also bounds how many elements the decoder accepts. */
     public static <C extends Collection<T>, T> StreamCodec<ByteBuf, C> collection(
             Supplier<C> supplier,
             StreamCodec<ByteBuf, T> elementCodec,
@@ -51,9 +37,28 @@ public final class ByteBufCodecs {
     ) {
         return StreamCodec.of(
                 (buf, collection) -> {
-                    if (collection.size() > maxSize) {
-                        throw new EncoderException("Collection size " + collection.size() + " is larger than " + maxSize);
+                    writeVarInt(buf, collection.size());
+                    for (T value : collection) {
+                        elementCodec.encode(buf, value);
                     }
+                },
+                buf -> {
+                    int size = Math.min(readVarInt(buf), maxSize);
+                    C values = supplier.get();
+                    for (int i = 0; i < size; i++) {
+                        values.add(elementCodec.decode(buf));
+                    }
+                    return values;
+                }
+        );
+    }
+
+    public static <C extends Collection<T>, T> StreamCodec<ByteBuf, C> collection(
+            Supplier<C> supplier,
+            StreamCodec<ByteBuf, T> elementCodec
+    ) {
+        return StreamCodec.of(
+                (buf, collection) -> {
                     writeVarInt(buf, collection.size());
                     for (T value : collection) {
                         elementCodec.encode(buf, value);
@@ -61,9 +66,6 @@ public final class ByteBufCodecs {
                 },
                 buf -> {
                     int size = readVarInt(buf);
-                    if (size < 0 || size > maxSize) {
-                        throw new DecoderException("Collection size " + size + " is larger than " + maxSize);
-                    }
                     C values = supplier.get();
                     for (int i = 0; i < size; i++) {
                         values.add(elementCodec.decode(buf));

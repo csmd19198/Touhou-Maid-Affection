@@ -16,7 +16,7 @@ import net.minecraft.resources.ResourceLocation;
  */
 public record TmaAiStatusPayload(TmaAiStatusWire.Status status) implements CustomPacketPayload {
     public static final Type<TmaAiStatusPayload> TYPE =
-            new Type<>(ResourceLocation.fromNamespaceAndPath(TouhouMaidAffection.MOD_ID, "tma_ai_status"));
+            new Type<>(new ResourceLocation(TouhouMaidAffection.MOD_ID, "tma_ai_status"));
 
     public static final StreamCodec<ByteBuf, TmaAiStatusPayload> STREAM_CODEC = StreamCodec.of(
             TmaAiStatusPayload::encode,

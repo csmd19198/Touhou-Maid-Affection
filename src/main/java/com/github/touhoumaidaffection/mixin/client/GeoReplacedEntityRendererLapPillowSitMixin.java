@@ -12,11 +12,14 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-@Mixin(targets = "com.github.tartaricacid.touhoulittlemaid.geckolib3.geo.GeoReplacedEntityRenderer", remap = false)
+@Mixin(targets = "com.github.tartaricacid.touhoulittlemaid.geckolib3.geo.GeoReplacedEntityRenderer")
 public abstract class GeoReplacedEntityRendererLapPillowSitMixin {
+    // The target method lives in Touhou Little Maid's bundled GeckoLib, which is not obfuscated, so
+    // the method reference itself must not be remapped; the @At member is a Minecraft one, so it
+    // keeps remap = true and still lands in the generated refmap.
     @Redirect(
             method = "render(Lnet/minecraft/world/entity/LivingEntity;Lcom/github/tartaricacid/touhoulittlemaid/geckolib3/core/AnimatableEntity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;shouldRiderSit()Z"),
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;shouldRiderSit()Z", remap = true),
             require = 0,
             remap = false
     )

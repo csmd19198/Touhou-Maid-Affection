@@ -40,7 +40,7 @@ public record MorningKissVoiceConfigPayload(
     }
 
     private static void encode(ByteBuf buf, MorningKissVoiceConfigPayload payload) {
-ByteBufCodecs.UUID.encode(buf, payload.maidUuid());
+        ByteBufCodecs.UUID.encode(buf, payload.maidUuid());
         CONFIG_STRING_CODEC.encode(buf, payload.mode());
         CONFIG_STRING_CODEC.encode(buf, payload.selectedGroup());
         CONFIG_STRING_CODEC.encode(buf, payload.selectedClip());
@@ -50,7 +50,7 @@ ByteBufCodecs.UUID.encode(buf, payload.maidUuid());
 
     private static MorningKissVoiceConfigPayload decode(ByteBuf buf) {
         return new MorningKissVoiceConfigPayload(
-ByteBufCodecs.UUID.decode(buf),
+                ByteBufCodecs.UUID.decode(buf),
                 CONFIG_STRING_CODEC.decode(buf),
                 CONFIG_STRING_CODEC.decode(buf),
                 CONFIG_STRING_CODEC.decode(buf),

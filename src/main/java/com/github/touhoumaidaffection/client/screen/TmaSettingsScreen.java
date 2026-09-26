@@ -66,7 +66,7 @@ public final class TmaSettingsScreen extends Screen {
      * so the blit must not tint or scale it; the extra dimming comes from the screen overlay.
      */
     private static final ResourceLocation SETTINGS_PANEL =
-            ResourceLocation.fromNamespaceAndPath(TouhouMaidAffection.MOD_ID, "textures/gui/settings_panel.png");
+            new ResourceLocation(TouhouMaidAffection.MOD_ID, "textures/gui/settings_panel.png");
     private static final int PANEL_TEXTURE_WIDTH = 1020;
     private static final int PANEL_TEXTURE_HEIGHT = 690;
 
@@ -254,7 +254,7 @@ public final class TmaSettingsScreen extends Screen {
     }
 
     @Override
-public void renderBackground(GuiGraphics graphics) {
+    public void renderBackground(GuiGraphics graphics) {
         // The panel background paints the full-screen dim overlay (page == whole screen), so the vanilla
         // menu/blur background is intentionally skipped to keep a single dim layer.
     }

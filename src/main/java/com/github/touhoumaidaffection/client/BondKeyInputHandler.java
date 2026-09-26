@@ -12,6 +12,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.network.PacketDistributor;
 
 @EventBusSubscriber(modid = TouhouMaidAffection.MOD_ID, value = Dist.CLIENT)
 public class BondKeyInputHandler {
@@ -33,18 +34,13 @@ public class BondKeyInputHandler {
                 continue;
             }
             if (minecraft.hitResult instanceof EntityHitResult hitResult && hitResult.getEntity() instanceof EntityMaid maid) {
-                boolean hasBondState = BondClientStateCache.hasState(maid.getUUID());
-                boolean unlockedByBondState = hasBondState && BondClientStateCache.isAbilityUnlocked(maid.getUUID(), "lap_pillow");
-
-                if (hasBondState && !unlockedByBondState) {
+                if (BondClientStateCache.hasState(maid.getUUID())
+                        && !BondClientStateCache.isAbilityUnlocked(maid.getUUID(), "lap_pillow")) {
                     minecraft.player.displayClientMessage(Component.translatable("bond.lap_pillow.failed_locked"), true);
                     continue;
                 }
-
                 TouhouMaidAffection.CHANNEL.sendToServer(new LapPillowStartPayload(maid.getUUID()));
-                if (unlockedByBondState) {
-                    LapPillowClientState.markStartRequested(maid.getUUID(), BondClientStateCache.getLapPillowPose(maid.getUUID()));
-                }
+                LapPillowClientState.markStartRequested(maid.getUUID(), BondClientStateCache.getLapPillowPose(maid.getUUID()));
             }
         }
 

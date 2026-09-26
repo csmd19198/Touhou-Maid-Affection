@@ -5,7 +5,7 @@
 <h1 align="center">Touhou Maid: Affection</h1>
 
 <p align="center">
-  <b>Bring affectionate interactions, bond progression, and lasting companionship to Touhou Little Maid.</b>
+  <b>An affection and bond expansion for Touhou Little Maid on Forge 1.20.1.</b>
 </p>
 
 <p align="center">
@@ -22,95 +22,104 @@
 
 ---
 
-## Overview
+## Latest Release
 
-**Touhou Maid: Affection** is an affection and bond companion expansion for **Touhou Little Maid (TLM)**.
+`1.7.2.2-forge1.20.1` is a short-lived Forge branch release based on the 1.7.2 feature line. It focuses on custom voice packs, AI-assisted Morning Kiss, safer voice preview UX, and a Morning Kiss AI/TTS language cache fix:
 
-Express your love through affectionate interactions, raise favorability by kissing, and unlock an exclusive Bond System as your relationship deepens. Bond abilities include relaxing Lap Pillows, personalized Morning Kisses, Emergency Rescues in fatal situations, and thoughtful Random Gifts. The mod also integrates with TLM's native AI chat and TTS speech system, alongside full datapack support for custom dialogue and voice lines.
+- Per-feature datapack voice pools for Morning Kiss and Emergency Rescue.
+- Static Morning Kiss dialogue packs with `{maid}` and `{player}` placeholders.
+- Optional AI-generated Morning Kiss dialogue and TTS pre-generation through TLM AI sites.
+- TMA MiMo adapter sites for TLM AI chat and TTS.
+- Targeted-maid kiss key action for crosshair-based kissing.
+- Voice preview in the Morning Kiss and Emergency Rescue voice-pool pages.
+- `aiDialogueLanguage` now affects Morning Kiss AI dialogue pregeneration and generated TTS requests; the default `tlm` value follows Touhou Little Maid's own language settings, and generated voice cache text follows TLM's TTS language button.
+- `/tma morning_kiss` shows AI/TTS status and cache statistics; admins can run `/tma morning_kiss ai on/off`, `/tma morning_kiss tts on/off`, or `/tma morning_kiss clear_ai_cache` while testing language and prompt changes.
+- Ready-to-zip sample datapack in `examples/TMA-Custom-Voice-Pack`.
 
-## Core Mechanics
+Full release history lives in [CHANGELOG.md](CHANGELOG.md).
+
+## Features
 
 ### Kiss Interaction
-- **Keybind Actions**: Aim your crosshair at your maid and press the kiss key. When carrying your maid using a saddle, use the dedicated carried kiss key to interact directly.
-- **Visual & Audio Feedback**: Each kiss brings heart particles, playful sound effects, and a brief close-up camera zoom.
-- **Favorability Progression**: Kissing steadily increases maid favorability. Higher favorability levels grant shorter kiss cooldowns.
-- **Maid's Prayer**: Rapid consecutive kisses reward both player and maid with the "Maid's Prayer" regeneration buff.
+
+Sneak with an empty hand and right-click your maid to kiss her. Kisses grant favorability, play random kiss sounds, spawn heart particles, and use a short close-up camera effect. Repeated kisses can trigger the custom Maid's Prayer effect.
+
+When CarryOn is installed, the right-click condition changes to avoid interaction conflicts. A dedicated keybind also supports kissing a princess-carried maid.
+
+### Targeted Kiss Key
+
+Controls include a targeted kiss action. When your crosshair points at an owned maid within range, the client sends only the entity id; the server re-checks ownership, distance, line of sight, cooldown, and normal kiss rules before applying the interaction.
 
 ### Bond System
-When a maid reaches Favorability Level 3 (Max), the **Bond Tab** unlocks at the top of her inventory GUI.
-Players can spend P-Points (PowerPoint items in inventory) to unlock unique bond abilities:
 
-| Bond Ability | Description |
-| :--- | :--- |
-| **Lap Pillow** | Rest together sitting or lying down. Supports adjustable offsets, camera lock, and YSM custom animations. |
-| **Morning Kiss** | Scheduled morning greeting upon waking. The maid approaches with a morning kiss, custom lines, and voice playback. |
-| **Emergency Rescue** | When you suffer fatal damage, bonded maids rush in to shield you and restore emergency health with unique rescue lines. |
-| **Random Gift** | Bonded maids gather and present thoughtful gifts over time, with progress tracked directly in the GUI. |
+High-affection maids can become bonded companions. Bond abilities currently include:
 
-### AI Morning Kiss & Bilingual Voice System
-Morning Kiss can leverage Touhou Little Maid's configured AI chat and TTS providers to pre-generate morning greetings in the background.
-- **Bilingual Combinations**: Display text and spoken voice languages are completely decoupled, supporting combinations like English text with Japanese voice.
-- **Auto Matching**: Defaults to `auto`, where text matches your Minecraft language and voice inherits the maid's TLM AI voice settings.
-- **Unified Management**: Directly uses your existing TLM AI providers and API keys without redundant setup.
+| Ability | Purpose |
+|---|---|
+| Lap Pillow | Rest with your maid using configurable sit/lie poses and optional YSM actions. |
+| Morning Kiss | Schedule or manually call a morning greeting with kisses, dialogue, and voice playback. |
+| Emergency Rescue | Let bonded maids contribute daily rescue chances and rescue voice lines. |
+| Random Gift | Let bonded maids accumulate and deliver small gifts over time. |
 
-## How to Use
+The server remains authoritative for unlocks, costs, distance checks, cooldowns, and ability execution. The client UI is a display and configuration surface.
 
-### Keybindings
-Configure the following keys under **Options → Controls → Key Binds**:
-- **Targeted Kiss**: Kiss the maid in your crosshair.
-- **Carried Maid Kiss**: Kiss while carrying a maid with a saddle.
-- **Lap Pillow**: Trigger the lap pillow rest pose.
-- **Lock View Angle**: Lock the camera angle during a lap pillow session.
+### Custom Dialogue And Voices
 
-### In-Game Settings Panel
-Click the **Settings** gear icon in the top-right corner of the Bond GUI to open the in-game control panel:
-- **Status**: Monitor AI dialogue cache progress, active toggles, and per-maid statistics.
-- **Features**: Toggle individual bond mechanics and adjust AI cache generation limits and scan intervals.
-- **Voice**: Switch display/voice languages, edit the Morning Kiss prompt template live, or jump directly to TLM's AI provider settings.
-- **Volume**: Adjust volume sliders in real-time for kiss sounds, morning kiss voices, rescue lines, and voice previews.
+Datapack-driven voice pools use this layout:
 
-### Admin Commands
-All data and settings follow server-authoritative validation. Operators (Permission Level 2) can manage features via `/tma`:
-```
-/tma morning_kiss status                       # View morning kiss status and AI cache stats
-/tma morning_kiss clear_ai_cache [all|maid...]  # Clear generated dialogue and voice cache
-/tma rescue on|off|toggle                      # Enable or disable emergency rescue server-wide
-/tma bond prune [days]                         # Clean up bond data for maids inactive over N days (default: 90)
+```text
+data/touhou_maid_affection/morning_kiss/profile.json
+data/touhou_maid_affection/morning_kiss/voices/*.ogg
+data/touhou_maid_affection/emergency_rescue/profile.json
+data/touhou_maid_affection/emergency_rescue/voices/*.ogg
 ```
 
-### Custom Datapack Voices
-Expand dialogue pools and `.ogg` voice lines via Datapacks:
-- Datapack paths: `data/touhou_maid_affection/morning_kiss/` and `emergency_rescue/`
-- Ready-to-use sample pack: [examples/TMA-Custom-Voice-Pack](examples/TMA-Custom-Voice-Pack)
-- Detailed tutorial: [早安吻相关配置说明.md](早安吻相关配置说明.md)
+Morning Kiss datapacks can define static dialogue pools, kiss sound behavior, and OGG voice files. Emergency Rescue datapacks define rescue OGG voice files and a fallback sound event. The voice-pool pages can preview selected voices before saving.
 
-## Important Notes
+See [早安吻文本修改教程.md](早安吻文本修改教程.md) and the sample pack in [examples/TMA-Custom-Voice-Pack](examples/TMA-Custom-Voice-Pack).
 
-- **Server Authority**: Favorability growth, cooldowns, line-of-sight checks, and ability activation are fully validated by the server. Singleplayer and multiplayer servers share identical behavior.
-- **Volume Attenuation**: In-game volume sliders control client-side attenuation (`0.0` for mute, `1.0` for full volume). Increase master/system volume for higher output.
-- **Permissions**: On dedicated servers, global toggles, language rules, and prompt templates are operator-only. Non-op players view the settings panel in read-only mode.
-- **Data Persistence**: Maid bond data is safely preserved across maid deaths, chunk unloads, or dimensional transfers. Use `/tma bond prune` to purge abandoned data.
+### AI And MiMo
 
-## Miscellaneous & Compatibility
+Morning Kiss can optionally use TLM AI sites to pre-generate dialogue and TTS audio. Runtime behavior, prompts, and the `aiDialogueLanguage` language setting are configured in `config/touhou_maid_affection-common.toml`; `tlm`, `auto`, or `default` follows Touhou Little Maid's own language settings. Text-only generation follows the maid chat language, while generated voice cache text follows TLM's TTS language button so the text sent to TTS matches the requested voice language. Explicit values such as `en_us` or `ja_jp` override both. Datapacks stay responsible for static text and pre-recorded OGG files. `/tma morning_kiss` reports the current AI/TTS settings, `/tma morning_kiss cache` reports generated cache details per maid, pool, text language, voice language, and in-flight request, and admins can use `ai on/off`, `tts on/off`, or `clear_ai_cache` while testing language or prompt settings. Generated cache capacity is enforced per maid and per time pool; with the default target of 4 and three pools, one maid keeps up to 12 generated entries total even if several languages appear in the cache details. By default, generated cache entries are reused without being consumed; set `aiDialogueCacheConsumeOnUse=true` if you prefer the old auto-refill behavior.
 
-### Mod Integrations
-- **Touhou Little Maid (TLM)**: Required core dependency (built against `1.5.3-forge+mc1.20.1`).
-- **MaidFileManager**: Seamlessly carries bond levels, unlocked abilities, and voice settings across `.maid` file migrations.
-- **Epic Fight**: Compatible with `[史诗战斗：车万女仆]` bridge & `Epic Fight - Avalon`; bond tab automatically avoids GUI tab collisions.
-- **Yes Steve Model (YSM)**: Supports custom animation sync during lap pillows.
-- **Tweakerge / Tweakeroo**: Fully compatible with Free Camera mode without causing player pose conflicts.
+TMA also registers MiMo-compatible chat and TTS site types for TLM's AI settings UI. The adapter supplies provider defaults only; user API keys and enabled site state remain managed by Touhou Little Maid.
 
-### Installation
-1. Install Minecraft `1.20.1` and Forge `47.4.x`.
-2. Install **Touhou Little Maid** for Forge 1.20.1 (`1.5.0+`).
-3. Place `touhou-maid-affection-1.7.5.1.jar` into your `.minecraft/mods` directory.
+### Compatibility
+
+- Touhou Little Maid: required dependency, built against `1.5.2-forge+mc1.20.1`.
+- Yes Steve Model: optional action playback and action discovery.
+- CarryOn: optional right-click conflict avoidance.
+- TLM GUI, AI sites, and sound packs: soft integration where available, silent fallback where absent.
+
+## Installation
+
+1. Install Minecraft `1.20.1` with Forge `47.4.x`.
+2. Install Touhou Little Maid for Forge 1.20.1.
+3. Put `touhou-maid-affection-1.7.2.2.jar` into your `mods` folder.
 4. Launch the game.
 
-### Developer & Architecture Docs
-- [PROJECT_ARCHITECTURE.md](PROJECT_ARCHITECTURE.md): Architecture overview and module boundaries.
-- [CHANGELOG.md](CHANGELOG.md): Complete version history.
-- [早安吻相关配置说明.md](早安吻相关配置说明.md): Datapack dialogue, voice, and AI guide.
-- [TESTING.md](TESTING.md): Testing suite and regression workflows.
+## Build From Source
 
-### License
-This project is open-source under the [MIT License](LICENSE).
+```bash
+git clone https://github.com/yabo083/Touhou-Maid-Affection.git
+cd Touhou-Maid-Affection
+./gradlew build
+```
+
+Output jar:
+
+```text
+build/libs/touhou-maid-affection-<version>.jar
+```
+
+## Maintenance Docs
+
+- [PROJECT_ARCHITECTURE.md](PROJECT_ARCHITECTURE.md): architecture boundaries and module responsibilities.
+- [CHANGELOG.md](CHANGELOG.md): user-facing release history.
+- [早安吻文本修改教程.md](早安吻文本修改教程.md): datapack text, voice, and AI setup guide.
+- [TESTING.md](TESTING.md): test scope and regression commands.
+- [DEPLOYMENT.md](DEPLOYMENT.md): release constraints and pre-release checklist.
+
+## License
+
+[MIT License](LICENSE)
